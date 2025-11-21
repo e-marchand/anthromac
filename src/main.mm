@@ -93,22 +93,24 @@ extern "C" {
     self.widget->setText(initialText);
 
     // Create custom view (Objective-C++ NSView)
-    void* viewPtr = CreateCustomTextWidgetView(0, 0, 800, 600);
+    // Leave space at top for instructions label (50 pixels)
+    void* viewPtr = CreateCustomTextWidgetView(0, 0, 800, 550);
     SetWidgetForView(viewPtr, self.widget);
 
     NSView* customView = (__bridge NSView*)viewPtr;
     customView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 
-    // Add instructions label
-    NSTextField* instructionsLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(10, 560, 780, 30)];
-    [instructionsLabel setStringValue:@"Click text to select, then: Right-click OR Edit menu → Services to access Writing Tools (Summarize, Proofread, Rewrite, etc.)"];
+    // Add instructions label at the TOP of the window
+    NSTextField* instructionsLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(10, 555, 780, 40)];
+    [instructionsLabel setStringValue:@"Click and drag to select text, then: Right-click OR Edit menu → Services → Writing Tools (Summarize, Proofread, Rewrite, etc.)"];
     [instructionsLabel setBezeled:NO];
-    [instructionsLabel setDrawsBackground:NO];
+    [instructionsLabel setDrawsBackground:YES];
+    [instructionsLabel setBackgroundColor:[NSColor controlBackgroundColor]];
     [instructionsLabel setEditable:NO];
     [instructionsLabel setSelectable:NO];
     [instructionsLabel setFont:[NSFont boldSystemFontOfSize:11]];
     [instructionsLabel setTextColor:[NSColor secondaryLabelColor]];
-    instructionsLabel.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
+    instructionsLabel.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
 
     // Create container view
     NSView* containerView = [[NSView alloc] initWithFrame:frame];

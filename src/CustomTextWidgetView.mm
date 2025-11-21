@@ -96,46 +96,55 @@
     [_backgroundColor setFill];
     NSRectFill(dirtyRect);
 
-    // STEP 2: Draw selection highlight (if any)
-    if (selLength > 0) {
-        // Create attributed string to measure text
-        NSDictionary* attributes = @{
-            NSFontAttributeName: _font
-        };
-        NSAttributedString* attrString = [[NSAttributedString alloc] initWithString:nsText attributes:attributes];
-
-        // Calculate selection rectangle
-        NSRange beforeSelection = NSMakeRange(0, selStart);
-        NSAttributedString* beforeText = [attrString attributedSubstringFromRange:beforeSelection];
-        CGSize beforeSize = [beforeText size];
-
-        NSRange selectionRange = NSMakeRange(0, selStart + selLength);
-        NSAttributedString* selectedText = [attrString attributedSubstringFromRange:selectionRange];
-        CGSize selectedSize = [selectedText size];
-
-        CGFloat selectionWidth = selectedSize.width - beforeSize.width;
-
-        // Draw selection background
-        NSRect selectionRect = NSMakeRect(textRect.origin.x + beforeSize.width,
-                                          textRect.origin.y,
-                                          selectionWidth,
-                                          beforeSize.height + 4); // Add some padding
-
-        [[_selectionColor colorWithAlphaComponent:0.4] setFill];
-        NSRectFill(selectionRect);
-
-        NSLog(@"Drawing selection: start=%zu, length=%zu, rect=(%.1f, %.1f, %.1f, %.1f)",
-              selStart, selLength, selectionRect.origin.x, selectionRect.origin.y,
-              selectionRect.size.width, selectionRect.size.height);
-    }
-
-    // STEP 3: Draw text on top of selection
+    // Create attributed string for text rendering and measurement
     NSDictionary* attributes = @{
         NSFontAttributeName: _font,
         NSForegroundColorAttributeName: _textColor
     };
+    NSAttributedString* attrString = [[NSAttributedString alloc] initWithString:nsText attributes:attributes];
 
-    [nsText drawInRect:textRect withAttributes:attributes];
+    // Calculate proper layout using NSLayoutManager for accurate glyph positions
+    NSTextStorage* textStorage = [[NSTextStorage alloc] initWithAttributedString:attrString];
+    NSLayoutManager* layoutManager = [[NSLayoutManager alloc] init];
+    NSTextContainer* textContainer = [[NSTextContainer alloc] initWithContainerSize:textRect.size];
+
+    [textContainer setLineFragmentPadding:0];
+    [layoutManager addTextContainer:textContainer];
+    [textStorage addLayoutManager:layoutManager];
+
+    // STEP 2: Draw selection highlight (if any)
+    if (selLength > 0 && selStart < [nsText length]) {
+        // Get the glyph range for the selection
+        NSRange glyphRange = [layoutManager glyphRangeForCharacterRange:NSMakeRange(selStart, selLength)
+                                                    actualCharacterRange:NULL];
+
+        // Enumerate line fragments that contain the selection
+        [layoutManager enumerateLineFragmentsForGlyphRange:glyphRange
+                                                 usingBlock:^(NSRect rect, NSRect usedRect, NSTextContainer *textContainer, NSRange lineGlyphRange, BOOL *stop) {
+            // Calculate the intersection of selection with this line
+            NSRange intersectionRange;
+            intersectionRange.location = MAX(glyphRange.location, lineGlyphRange.location);
+            intersectionRange.length = MIN(NSMaxRange(glyphRange), NSMaxRange(lineGlyphRange)) - intersectionRange.location;
+
+            if (intersectionRange.length > 0) {
+                // Get the bounding rect for this portion of the selection
+                NSRect selectionRect = [layoutManager boundingRectForGlyphRange:intersectionRange
+                                                                inTextContainer:textContainer];
+
+                // Offset by textRect origin (since layout manager uses local coordinates)
+                selectionRect.origin.x += textRect.origin.x;
+                selectionRect.origin.y += textRect.origin.y;
+
+                // Draw selection background
+                [[_selectionColor colorWithAlphaComponent:0.4] setFill];
+                NSRectFill(selectionRect);
+            }
+        }];
+    }
+
+    // STEP 3: Draw text on top of selection
+    NSRange glyphRange = [layoutManager glyphRangeForTextContainer:textContainer];
+    [layoutManager drawGlyphsForGlyphRange:glyphRange atPoint:textRect.origin];
 
     // STEP 4: Draw border around text area when focused
     if ([[self window] firstResponder] == self) {
@@ -164,49 +173,42 @@
         return 0;
     }
 
-    // Create attributed string for text measurement
+    NSRect textRect = [self textRect];
+
+    // Convert point to text container coordinate system
+    NSPoint localPoint = NSMakePoint(point.x - textRect.origin.x,
+                                     point.y - textRect.origin.y);
+
+    // Create text layout system for accurate hit testing
     NSDictionary* attributes = @{
         NSFontAttributeName: _font
     };
     NSAttributedString* attrString = [[NSAttributedString alloc] initWithString:nsText attributes:attributes];
 
-    NSRect textRect = [self textRect];
+    NSTextStorage* textStorage = [[NSTextStorage alloc] initWithAttributedString:attrString];
+    NSLayoutManager* layoutManager = [[NSLayoutManager alloc] init];
+    NSTextContainer* textContainer = [[NSTextContainer alloc] initWithContainerSize:textRect.size];
 
-    // Convert point to text rect coordinate system
-    NSPoint localPoint = NSMakePoint(point.x - textRect.origin.x,
-                                     point.y - textRect.origin.y);
+    [textContainer setLineFragmentPadding:0];
+    [layoutManager addTextContainer:textContainer];
+    [textStorage addLayoutManager:layoutManager];
 
-    // If click is before text, return 0
-    if (localPoint.x <= 0 || localPoint.y < 0 || localPoint.y > textRect.size.height) {
-        return 0;
+    // Use layout manager for accurate character index from point
+    NSUInteger glyphIndex = [layoutManager glyphIndexForPoint:localPoint
+                                              inTextContainer:textContainer
+                       fractionOfDistanceThroughGlyph:NULL];
+
+    NSUInteger charIndex = [layoutManager characterIndexForGlyphAtIndex:glyphIndex];
+
+    // Clamp to valid range
+    if (charIndex > [nsText length]) {
+        charIndex = [nsText length];
     }
 
-    // Find the character index by measuring text width
-    CGFloat totalWidth = 0;
-    NSUInteger bestIndex = 0;
-    CGFloat minDistance = CGFLOAT_MAX;
+    NSLog(@"Click at (%.1f, %.1f) local:(%.1f, %.1f) -> character index %lu",
+          point.x, point.y, localPoint.x, localPoint.y, (unsigned long)charIndex);
 
-    for (NSUInteger i = 0; i <= [nsText length]; i++) {
-        NSRange range = NSMakeRange(0, i);
-        NSAttributedString* substring = [attrString attributedSubstringFromRange:range];
-
-        CGSize size = [substring size];
-        CGFloat distance = fabs(size.width - localPoint.x);
-
-        if (distance < minDistance) {
-            minDistance = distance;
-            bestIndex = i;
-        }
-
-        // If we've passed the click point, stop
-        if (size.width > localPoint.x) {
-            break;
-        }
-    }
-
-    NSLog(@"Click at (%.1f, %.1f) -> character index %lu", point.x, point.y, (unsigned long)bestIndex);
-
-    return bestIndex;
+    return charIndex;
 }
 
 // MARK: - Mouse Handling
