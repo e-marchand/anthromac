@@ -65,6 +65,15 @@
                 if ([coordinatorClass instancesRespondToSelector:initSel]) {
                     _writingToolsCoordinator = [[coordinatorClass alloc] performSelector:initSel withObject:self];
                     NSLog(@"[Coordinator] Created NSWritingToolsCoordinator: %@", _writingToolsCoordinator);
+
+                    // Try to set the coordinator on the view (NSView.writingToolsCoordinator in macOS 15+)
+                    SEL setCoordinatorSel = NSSelectorFromString(@"setWritingToolsCoordinator:");
+                    if ([self respondsToSelector:setCoordinatorSel]) {
+                        [self performSelector:setCoordinatorSel withObject:_writingToolsCoordinator];
+                        NSLog(@"[Coordinator] ✅ Set coordinator on NSView.writingToolsCoordinator");
+                    } else {
+                        NSLog(@"[Coordinator] ⚠️ NSView doesn't have writingToolsCoordinator property");
+                    }
                 }
             }
         }
@@ -452,75 +461,45 @@
 // MARK: - Writing Tools Trigger
 
 - (void)showWritingTools:(id)sender {
+    NSLog(@"[Coordinator] showWritingTools called");
+
     if (@available(macOS 15.0, *)) {
-        if (!_writingToolsCoordinator) {
-            NSLog(@"[Coordinator] ⚠️ No coordinator available");
+        // The coordinator responds to system-initiated Writing Tools
+        // Try to trigger via responder chain
+
+        // Method 1: Try standard Writing Tools action (if it exists)
+        SEL showWT = NSSelectorFromString(@"_showWritingTools:");
+        if ([self respondsToSelector:showWT]) {
+            [self performSelector:showWT withObject:sender];
+            NSLog(@"[Coordinator] ✅ Triggered via _showWritingTools:");
             return;
         }
 
-        if (!_widget) {
-            NSLog(@"[Coordinator] ⚠️ No widget available");
-            return;
-        }
+        // Method 2: Try to manually start a session
+        if (_writingToolsCoordinator) {
+            NSLog(@"[Coordinator] Attempting to manually start Writing Tools session");
 
-        // Get selection range
-        size_t selStart, selLength;
-        _widget->getSelectionRange(selStart, selLength);
+            // Call willBeginWritingToolsSession to see if we can trigger it
+            SEL willBeginSel = NSSelectorFromString(@"willBeginWritingToolsSession:requestContexts:");
+            if ([_writingToolsCoordinator respondsToSelector:willBeginSel]) {
+                // Try to invoke it
+                id session = nil; // We don't have a session object
+                NSMutableArray *contexts = [NSMutableArray array];
 
-        NSRange range = NSMakeRange(selStart, selLength);
-        NSLog(@"[Coordinator] Triggering Writing Tools for range [%lu, %lu]", (unsigned long)selStart, (unsigned long)selLength);
+                NSMethodSignature *sig = [_writingToolsCoordinator methodSignatureForSelector:willBeginSel];
+                NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+                [inv setTarget:_writingToolsCoordinator];
+                [inv setSelector:willBeginSel];
+                [inv setArgument:&session atIndex:2];
+                [inv setArgument:&contexts atIndex:3];
+                [inv invoke];
 
-        // Trigger Writing Tools using the coordinator
-        // Try different method signatures
-        BOOL invoked = NO;
-
-        // Try: beginWritingToolsForRange:inView:
-        SEL beginSel1 = NSSelectorFromString(@"beginWritingToolsForRange:inView:");
-        if ([_writingToolsCoordinator respondsToSelector:beginSel1]) {
-            NSMethodSignature *signature = [_writingToolsCoordinator methodSignatureForSelector:beginSel1];
-            NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:signature];
-            [invocation setTarget:_writingToolsCoordinator];
-            [invocation setSelector:beginSel1];
-            [invocation setArgument:&range atIndex:2];
-            id view = self;
-            [invocation setArgument:&view atIndex:3];
-            [invocation invoke];
-            NSLog(@"[Coordinator] ✅ Writing Tools invoked via beginWritingToolsForRange:inView:");
-            invoked = YES;
-        }
-
-        // Try: beginWritingTools
-        if (!invoked) {
-            SEL beginSel2 = NSSelectorFromString(@"beginWritingTools");
-            if ([_writingToolsCoordinator respondsToSelector:beginSel2]) {
-                [_writingToolsCoordinator performSelector:beginSel2];
-                NSLog(@"[Coordinator] ✅ Writing Tools invoked via beginWritingTools");
-                invoked = YES;
+                NSLog(@"[Coordinator] Called willBeginWritingToolsSession");
             }
         }
 
-        // Try: showWritingTools
-        if (!invoked) {
-            SEL beginSel3 = NSSelectorFromString(@"showWritingTools");
-            if ([_writingToolsCoordinator respondsToSelector:beginSel3]) {
-                [_writingToolsCoordinator performSelector:beginSel3];
-                NSLog(@"[Coordinator] ✅ Writing Tools invoked via showWritingTools");
-                invoked = YES;
-            }
-        }
-
-        if (!invoked) {
-            NSLog(@"[Coordinator] ⚠️ Could not find begin method");
-            // Log all available methods
-            unsigned int methodCount;
-            Method *methods = class_copyMethodList([_writingToolsCoordinator class], &methodCount);
-            NSLog(@"[Coordinator] Available instance methods:");
-            for (unsigned int i = 0; i < methodCount; i++) {
-                SEL selector = method_getName(methods[i]);
-                NSLog(@"  - %@", NSStringFromSelector(selector));
-            }
-            free(methods);
-        }
+        NSLog(@"[Coordinator] ⚠️ Coordinator API doesn't support manual triggering");
+        NSLog(@"[Coordinator] Writing Tools must be triggered by system (Edit menu, keyboard shortcut)");
     }
 }
 
