@@ -35,8 +35,9 @@
     if (self) {
         _widget = nullptr;
         _font = [NSFont systemFontOfSize:14.0];
-        _textColor = [NSColor textColor];
-        _backgroundColor = [NSColor textBackgroundColor];
+        // Use explicit colors for debugging (black text on white background)
+        _textColor = [NSColor blackColor];
+        _backgroundColor = [NSColor whiteColor];
         _selectionColor = [NSColor selectedTextBackgroundColor];
 
         // Initialize mouse tracking state
