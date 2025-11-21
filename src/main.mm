@@ -174,6 +174,10 @@ extern "C" {
     [self.window setContentView:containerView];
     [self.window makeKeyAndOrderFront:nil];
 
+    // Force display of both widgets after window is visible
+    [servicesView setNeedsDisplay:YES];
+    [coordinatorView setNeedsDisplay:YES];
+
     // Log instructions
     NSLog(@"====================================================================");
     NSLog(@"Writing Tools Demo - Two Approaches Side-by-Side");

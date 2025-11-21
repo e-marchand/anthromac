@@ -124,6 +124,13 @@
     size_t selStart, selLength;
     _widget->getSelectionRange(selStart, selLength);
 
+    // Debug: Log text length on first draw
+    static BOOL firstDraw = YES;
+    if (firstDraw) {
+        NSLog(@"[Coordinator] drawRect called - text length: %lu, text: %@", (unsigned long)[nsText length], nsText);
+        firstDraw = NO;
+    }
+
     NSRect textRect = [self textRect];
 
     // STEP 1: Draw background
