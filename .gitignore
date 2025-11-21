@@ -1,0 +1,18 @@
+# Build artifacts
+build/
+*.o
+*.app
+
+# macOS system files
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+
+# Compiler outputs
+*.dSYM/
