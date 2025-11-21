@@ -2,9 +2,13 @@
 #include "CustomTextWidget.h"
 #include <string>
 
+// Forward declare the coordinator and delegate protocol (macOS 15+)
+@class NSWritingToolsCoordinator;
+@protocol NSWritingToolsCoordinatorDelegate;
+
 // Objective-C++ NSView subclass using the NEW Writing Tools Coordinator API
 // This provides inline Writing Tools UI (macOS 15+)
-@interface CoordinatorTextWidgetView : NSView <NSTextInputClient, NSTextViewDelegate, NSServicesMenuRequestor>
+@interface CoordinatorTextWidgetView : NSView <NSTextInputClient>
 {
     CustomTextWidget* _widget;
     NSFont* _font;
@@ -17,7 +21,8 @@
     NSPoint _mouseDownPoint;
     NSUInteger _mouseDownCharIndex;
 
-    // Writing Tools state
+    // Writing Tools Coordinator (macOS 15+)
+    NSWritingToolsCoordinator* _writingToolsCoordinator;
     BOOL _isWritingToolsActive;
 }
 
@@ -49,10 +54,19 @@
         _mouseDownCharIndex = 0;
         _isWritingToolsActive = NO;
 
-        // For custom NSView with Writing Tools Coordinator API:
-        // NSView has a writingToolsCoordinator property in macOS 15+
-        // We don't need to set writingToolsBehavior (that's only for NSTextView)
-        // The coordinator is automatically created when needed by the system
+        // Initialize Writing Tools Coordinator (macOS 15+)
+        if (@available(macOS 15.0, *)) {
+            // Create coordinator with self as delegate
+            Class coordinatorClass = NSClassFromString(@"NSWritingToolsCoordinator");
+            if (coordinatorClass) {
+                // Use performSelector to avoid compile-time checks
+                SEL initSel = NSSelectorFromString(@"initWithDelegate:");
+                if ([coordinatorClass instancesRespondToSelector:initSel]) {
+                    _writingToolsCoordinator = [[coordinatorClass alloc] performSelector:initSel withObject:self];
+                    NSLog(@"[Coordinator] Created NSWritingToolsCoordinator: %@", _writingToolsCoordinator);
+                }
+            }
+        }
     }
     return self;
 }
@@ -366,7 +380,7 @@
         }
     }
 
-    // Create context menu with Writing Tools via Services
+    // Create context menu with inline Writing Tools trigger
     NSMenu* menu = [[NSMenu alloc] initWithTitle:@""];
 
     // Add standard editing items
@@ -377,21 +391,18 @@
 
     [menu addItem:[NSMenuItem separatorItem]];
 
-    // CRITICAL: Add Services submenu for Writing Tools
-    NSMenuItem* servicesItem = [[NSMenuItem alloc] initWithTitle:@"Services"
-                                                          action:nil
-                                                   keyEquivalent:@""];
-    NSMenu* servicesMenu = [[NSMenu alloc] initWithTitle:@"Services"];
-    [servicesItem setSubmenu:servicesMenu];
+    // Add Writing Tools menu item (triggers coordinator)
+    if (@available(macOS 15.0, *)) {
+        if (_writingToolsCoordinator) {
+            [menu addItemWithTitle:@"✨ Writing Tools..."
+                            action:@selector(showWritingTools:)
+                     keyEquivalent:@""];
+        }
+    }
 
-    // Register with services
-    [NSApplication sharedApplication].servicesMenu = servicesMenu;
+    NSLog(@"[Coordinator] Showing context menu with inline Writing Tools");
 
-    [menu addItem:servicesItem];
-
-    NSLog(@"[Coordinator] Showing context menu with Services");
-
-    // Show the menu (Writing Tools will be in Services submenu)
+    // Show the menu
     [NSMenu popUpContextMenu:menu withEvent:event forView:self];
 }
 
@@ -435,6 +446,47 @@
     [self setNeedsDisplay:YES];
 
     NSLog(@"[Coordinator] Selected all text (%zu characters)", text.length());
+}
+
+// MARK: - Writing Tools Trigger
+
+- (void)showWritingTools:(id)sender {
+    if (@available(macOS 15.0, *)) {
+        if (!_writingToolsCoordinator) {
+            NSLog(@"[Coordinator] ⚠️ No coordinator available");
+            return;
+        }
+
+        if (!_widget) {
+            NSLog(@"[Coordinator] ⚠️ No widget available");
+            return;
+        }
+
+        // Get selection range
+        size_t selStart, selLength;
+        _widget->getSelectionRange(selStart, selLength);
+
+        NSRange range = NSMakeRange(selStart, selLength);
+        NSLog(@"[Coordinator] Triggering Writing Tools for range [%lu, %lu]", (unsigned long)selStart, (unsigned long)selLength);
+
+        // Trigger Writing Tools using the coordinator
+        // Try to call beginWritingToolsForRange: on the coordinator
+        SEL beginSel = NSSelectorFromString(@"beginWritingToolsForRange:inView:");
+        if ([_writingToolsCoordinator respondsToSelector:beginSel]) {
+            NSMethodSignature *signature = [_writingToolsCoordinator methodSignatureForSelector:beginSel];
+            NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:signature];
+            [invocation setTarget:_writingToolsCoordinator];
+            [invocation setSelector:beginSel];
+            [invocation setArgument:&range atIndex:2];
+            id view = self;
+            [invocation setArgument:&view atIndex:3];
+            [invocation invoke];
+            NSLog(@"[Coordinator] ✅ Writing Tools invoked via coordinator");
+        } else {
+            NSLog(@"[Coordinator] ⚠️ Coordinator doesn't respond to beginWritingToolsForRange:inView:");
+            NSLog(@"[Coordinator] Available methods: %@", [_writingToolsCoordinator class]);
+        }
+    }
 }
 
 // MARK: - Keyboard Shortcuts
@@ -542,74 +594,91 @@
     return NSMakeRect(textRect.origin.x, textRect.origin.y, 100, 20);
 }
 
-// MARK: - NSServicesMenuRequestor Protocol (For Writing Tools)
+// MARK: - NSWritingToolsCoordinatorDelegate Methods (macOS 15+)
 
-- (id)validRequestorForSendType:(NSPasteboardType)sendType
-                     returnType:(NSPasteboardType)returnType {
-    // Check if we can provide text for services
-    if ([sendType isEqualToString:NSPasteboardTypeString] ||
-        [sendType isEqualToString:NSPasteboardTypeRTF]) {
-        if (_widget && !_widget->getText().empty()) {
-            NSLog(@"[Coordinator] validRequestor: YES for sendType=%@", sendType);
-            return self;
+// Called when Writing Tools requests the current text context
+- (void)writingToolsCoordinator:(id)coordinator
+            requestsContextInRange:(NSRange)range
+                        completion:(void (^)(id context))completion API_AVAILABLE(macos(15.0)) {
+    if (!_widget) {
+        completion(nil);
+        return;
+    }
+
+    std::string text = _widget->getText();
+    NSString* nsText = [NSString stringWithUTF8String:text.c_str()];
+
+    // Get selection range
+    size_t selStart, selLength;
+    _widget->getSelectionRange(selStart, selLength);
+
+    // Create attributed string with text context
+    NSDictionary* attrs = @{NSFontAttributeName: _font};
+    NSAttributedString* attrString = [[NSAttributedString alloc] initWithString:nsText attributes:attrs];
+
+    // Create context object using runtime lookup (API may not be available at compile time)
+    Class contextClass = NSClassFromString(@"NSWritingToolsContext");
+    if (contextClass) {
+        SEL initSel = NSSelectorFromString(@"initWithAttributedString:range:");
+        if ([contextClass instancesRespondToSelector:initSel]) {
+            id context = [[contextClass alloc] performSelector:initSel withObject:attrString withObject:[NSValue valueWithRange:NSMakeRange(selStart, selLength)]];
+            NSLog(@"[Coordinator] Provided context: %lu chars, selection [%lu, %lu]", (unsigned long)[nsText length], (unsigned long)selStart, (unsigned long)selLength);
+            completion(context);
+            return;
         }
     }
 
-    // Check if we can receive text from services
-    if ([returnType isEqualToString:NSPasteboardTypeString]) {
-        NSLog(@"[Coordinator] validRequestor: YES for returnType=%@", returnType);
-        return self;
-    }
-
-    return [super validRequestorForSendType:sendType returnType:returnType];
+    NSLog(@"[Coordinator] Could not create context - API not available");
+    completion(nil);
 }
 
-- (BOOL)writeSelectionToPasteboard:(NSPasteboard *)pboard
-                             types:(NSArray<NSPasteboardType> *)types {
+// Called when Writing Tools wants to replace text
+- (void)writingToolsCoordinator:(id)coordinator
+                    replaceRange:(NSRange)range
+                         inContext:(id)context
+                       proposedText:(NSAttributedString *)proposedText
+                            reason:(NSInteger)reason
+                animationParameters:(id)animationParameters
+                        completion:(void (^)(void))completion API_AVAILABLE(macos(15.0)) {
     if (!_widget) {
-        NSLog(@"[Coordinator] writeSelectionToPasteboard: NO (no widget)");
-        return NO;
+        if (completion) completion();
+        return;
     }
 
-    std::string selectedText = _widget->getSelectedText();
-    if (selectedText.empty()) {
-        // If nothing selected, use all text
-        selectedText = _widget->getText();
-    }
+    NSString* newText = [proposedText string];
+    NSLog(@"[Coordinator] Replacing range [%lu, %lu] with %lu chars (reason: %ld)",
+          (unsigned long)range.location, (unsigned long)range.length,
+          (unsigned long)[newText length], (long)reason);
 
-    NSString* nsText = [NSString stringWithUTF8String:selectedText.c_str()];
+    // Replace the text in the widget
+    _widget->setSelection(range.location, range.length);
+    _widget->replaceSelection([newText UTF8String]);
 
-    if (!nsText || [nsText length] == 0) {
-        NSLog(@"[Coordinator] writeSelectionToPasteboard: NO (empty text)");
-        return NO;
-    }
-
-    [pboard clearContents];
-    BOOL success = [pboard setString:nsText forType:NSPasteboardTypeString];
-
-    NSLog(@"[Coordinator] writeSelectionToPasteboard: %@ (%lu chars)", success ? @"YES" : @"NO", (unsigned long)[nsText length]);
-    return success;
-}
-
-- (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard {
-    if (!_widget) {
-        NSLog(@"[Coordinator] readSelectionFromPasteboard: NO (no widget)");
-        return NO;
-    }
-
-    NSString* nsText = [pboard stringForType:NSPasteboardTypeString];
-
-    if (!nsText || [nsText length] == 0) {
-        NSLog(@"[Coordinator] readSelectionFromPasteboard: NO (empty pasteboard)");
-        return NO;
-    }
-
-    std::string cppText = [nsText UTF8String];
-    _widget->replaceSelection(cppText);
+    // Update display
     [self setNeedsDisplay:YES];
 
-    NSLog(@"[Coordinator] readSelectionFromPasteboard: YES (%lu chars)", (unsigned long)[nsText length]);
-    return YES;
+    if (completion) completion();
+}
+
+// Called when Writing Tools session begins
+- (void)writingToolsCoordinatorWillBegin:(id)coordinator API_AVAILABLE(macos(15.0)) {
+    _isWritingToolsActive = YES;
+    [self setNeedsDisplay:YES];
+    NSLog(@"[Coordinator] 🟢 Writing Tools session STARTED");
+}
+
+// Called when Writing Tools session ends
+- (void)writingToolsCoordinatorDidEnd:(id)coordinator API_AVAILABLE(macos(15.0)) {
+    _isWritingToolsActive = NO;
+    [self setNeedsDisplay:YES];
+    NSLog(@"[Coordinator] 🔴 Writing Tools session ENDED");
+}
+
+// Optional: Return ranges that should be ignored (e.g., code blocks, URLs)
+- (NSArray *)writingToolsCoordinator:(id)coordinator
+    ignoredRangesInEnclosingRange:(NSRange)enclosingRange API_AVAILABLE(macos(15.0)) {
+    NSLog(@"[Coordinator] Ignored ranges requested");
+    return @[]; // No ignored ranges for now
 }
 
 @end
