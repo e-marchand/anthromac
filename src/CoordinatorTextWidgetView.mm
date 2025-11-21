@@ -1,4 +1,5 @@
 #import <Cocoa/Cocoa.h>
+#import <objc/runtime.h>
 #include "CustomTextWidget.h"
 #include <string>
 
@@ -470,21 +471,55 @@
         NSLog(@"[Coordinator] Triggering Writing Tools for range [%lu, %lu]", (unsigned long)selStart, (unsigned long)selLength);
 
         // Trigger Writing Tools using the coordinator
-        // Try to call beginWritingToolsForRange: on the coordinator
-        SEL beginSel = NSSelectorFromString(@"beginWritingToolsForRange:inView:");
-        if ([_writingToolsCoordinator respondsToSelector:beginSel]) {
-            NSMethodSignature *signature = [_writingToolsCoordinator methodSignatureForSelector:beginSel];
+        // Try different method signatures
+        BOOL invoked = NO;
+
+        // Try: beginWritingToolsForRange:inView:
+        SEL beginSel1 = NSSelectorFromString(@"beginWritingToolsForRange:inView:");
+        if ([_writingToolsCoordinator respondsToSelector:beginSel1]) {
+            NSMethodSignature *signature = [_writingToolsCoordinator methodSignatureForSelector:beginSel1];
             NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:signature];
             [invocation setTarget:_writingToolsCoordinator];
-            [invocation setSelector:beginSel];
+            [invocation setSelector:beginSel1];
             [invocation setArgument:&range atIndex:2];
             id view = self;
             [invocation setArgument:&view atIndex:3];
             [invocation invoke];
-            NSLog(@"[Coordinator] ✅ Writing Tools invoked via coordinator");
-        } else {
-            NSLog(@"[Coordinator] ⚠️ Coordinator doesn't respond to beginWritingToolsForRange:inView:");
-            NSLog(@"[Coordinator] Available methods: %@", [_writingToolsCoordinator class]);
+            NSLog(@"[Coordinator] ✅ Writing Tools invoked via beginWritingToolsForRange:inView:");
+            invoked = YES;
+        }
+
+        // Try: beginWritingTools
+        if (!invoked) {
+            SEL beginSel2 = NSSelectorFromString(@"beginWritingTools");
+            if ([_writingToolsCoordinator respondsToSelector:beginSel2]) {
+                [_writingToolsCoordinator performSelector:beginSel2];
+                NSLog(@"[Coordinator] ✅ Writing Tools invoked via beginWritingTools");
+                invoked = YES;
+            }
+        }
+
+        // Try: showWritingTools
+        if (!invoked) {
+            SEL beginSel3 = NSSelectorFromString(@"showWritingTools");
+            if ([_writingToolsCoordinator respondsToSelector:beginSel3]) {
+                [_writingToolsCoordinator performSelector:beginSel3];
+                NSLog(@"[Coordinator] ✅ Writing Tools invoked via showWritingTools");
+                invoked = YES;
+            }
+        }
+
+        if (!invoked) {
+            NSLog(@"[Coordinator] ⚠️ Could not find begin method");
+            // Log all available methods
+            unsigned int methodCount;
+            Method *methods = class_copyMethodList([_writingToolsCoordinator class], &methodCount);
+            NSLog(@"[Coordinator] Available instance methods:");
+            for (unsigned int i = 0; i < methodCount; i++) {
+                SEL selector = method_getName(methods[i]);
+                NSLog(@"  - %@", NSStringFromSelector(selector));
+            }
+            free(methods);
         }
     }
 }
