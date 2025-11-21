@@ -9,10 +9,17 @@ build/
 *.swo
 *~
 
-# Xcode
-*.xcodeproj
-*.xcworkspace
+# Xcode user-specific files
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+*.xcworkspace/*
+!*.xcworkspace/contents.xcworkspacedata
 xcuserdata/
+*.xcuserdatad/
+DerivedData/
+*.xccheckout
+*.moved-aside
 
 # Compiler outputs
 *.dSYM/

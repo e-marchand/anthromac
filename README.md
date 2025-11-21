@@ -32,6 +32,22 @@ anthromac/
 
 ## 🔧 Building the Project
 
+### Option 1: Using Xcode (Recommended for Development & Debugging)
+
+```bash
+# Open the project in Xcode
+open WritingToolsDemo.xcodeproj
+```
+
+Then in Xcode:
+- Press **Cmd+R** to build and run
+- Set breakpoints by clicking the line numbers
+- Use **Cmd+\** to enable/disable breakpoints
+- View console output in the Debug area (Cmd+Shift+Y)
+- Use the debugger to step through code, inspect variables, etc.
+
+### Option 2: Using Make (Command Line)
+
 ```bash
 # Build the application
 make
@@ -188,6 +204,38 @@ To integrate Writing Tools into **your own custom GUI widget**:
 - [Apple Developer: Adding Writing Tools support to a custom NSView](https://developer.apple.com/documentation/appkit/adding-writing-tools-support-to-a-custom-nsview)
 - [NSServicesMenuRequestor Protocol Reference](https://developer.apple.com/documentation/appkit/nsservicesmenurequestor)
 
+## 🐛 Debugging with Xcode
+
+### Setting Breakpoints
+
+To debug the Writing Tools integration:
+
+1. **Open in Xcode:** `open WritingToolsDemo.xcodeproj`
+
+2. **Set breakpoints in key locations:**
+   - `src/CustomTextWidgetView.mm:174` - `validRequestorForSendType:returnType:`
+   - `src/CustomTextWidgetView.mm:194` - `writeSelectionToPasteboard:types:`
+   - `src/CustomTextWidgetView.mm:242` - `readSelectionFromPasteboard:`
+   - `src/CustomTextWidgetView.mm:118` - `rightMouseDown:` (context menu)
+
+3. **Run with debugger:** Press **Cmd+R**
+
+4. **Trigger breakpoints:** Click text, right-click, select Services
+
+5. **Inspect variables:**
+   - Hover over variables to see values
+   - Use **po** command in console: `po nsText`
+   - Check **Variables View** in debug area
+
+### Console Output
+
+All `NSLog()` calls appear in Xcode's debug console. Look for:
+- ✅ Success indicators
+- 📤 📥 Data flow indicators
+- ❌ Error messages
+
+Press **Cmd+Shift+Y** to show/hide the debug console.
+
 ## 🐛 Troubleshooting
 
 **Writing Tools menu doesn't appear:**
@@ -195,16 +243,19 @@ To integrate Writing Tools into **your own custom GUI widget**:
 - Check that Apple Intelligence is enabled in System Settings
 - Make sure the view is first responder (click on it first)
 - Verify there's text selected or available
+- Check debug logs - look for "validRequestorForSendType called"
 
 **Text doesn't update after AI processing:**
-- Check that `readSelectionFromPasteboard:` is being called
-- Verify the callback to refresh the view is working
-- Look for errors in Console.app
+- Set breakpoint in `readSelectionFromPasteboard:` to verify it's called
+- Check console for "📥 readSelectionFromPasteboard called"
+- Verify the pasteboard contains text data
+- Look for errors in Xcode console
 
 **Build errors:**
 - Ensure Xcode Command Line Tools are installed: `xcode-select --install`
 - Check that you're targeting macOS 15.0+
 - Verify Objective-C ARC is enabled (`-fobjc-arc`)
+- Clean build folder: Product → Clean Build Folder (Cmd+Shift+K)
 
 ## 📄 License
 
