@@ -464,10 +464,9 @@
     NSLog(@"[Coordinator] showWritingTools called");
 
     if (@available(macOS 15.0, *)) {
-        // The coordinator responds to system-initiated Writing Tools
-        // Try to trigger via responder chain
+        // Try to trigger via responder chain with standard actions
 
-        // Method 1: Try standard Writing Tools action (if it exists)
+        // Try: _showWritingTools: (private API)
         SEL showWT = NSSelectorFromString(@"_showWritingTools:");
         if ([self respondsToSelector:showWT]) {
             [self performSelector:showWT withObject:sender];
@@ -475,31 +474,25 @@
             return;
         }
 
-        // Method 2: Try to manually start a session
-        if (_writingToolsCoordinator) {
-            NSLog(@"[Coordinator] Attempting to manually start Writing Tools session");
-
-            // Call willBeginWritingToolsSession to see if we can trigger it
-            SEL willBeginSel = NSSelectorFromString(@"willBeginWritingToolsSession:requestContexts:");
-            if ([_writingToolsCoordinator respondsToSelector:willBeginSel]) {
-                // Try to invoke it
-                id session = nil; // We don't have a session object
-                NSMutableArray *contexts = [NSMutableArray array];
-
-                NSMethodSignature *sig = [_writingToolsCoordinator methodSignatureForSelector:willBeginSel];
-                NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
-                [inv setTarget:_writingToolsCoordinator];
-                [inv setSelector:willBeginSel];
-                [inv setArgument:&session atIndex:2];
-                [inv setArgument:&contexts atIndex:3];
-                [inv invoke];
-
-                NSLog(@"[Coordinator] Called willBeginWritingToolsSession");
-            }
+        // Try: showWritingTools: (if it exists)
+        SEL showWT2 = NSSelectorFromString(@"showWritingTools:");
+        if ([self respondsToSelector:showWT2]) {
+            [self performSelector:showWT2 withObject:sender];
+            NSLog(@"[Coordinator] ✅ Triggered via showWritingTools:");
+            return;
         }
 
-        NSLog(@"[Coordinator] ⚠️ Coordinator API doesn't support manual triggering");
-        NSLog(@"[Coordinator] Writing Tools must be triggered by system (Edit menu, keyboard shortcut)");
+        // Try sending action up responder chain
+        if ([[NSApplication sharedApplication] sendAction:@selector(orderFrontCharacterPalette:) to:nil from:self]) {
+            NSLog(@"[Coordinator] Sent action to responder chain");
+        }
+
+        NSLog(@"[Coordinator] ⚠️ NSWritingToolsCoordinator doesn't support manual triggering");
+        NSLog(@"[Coordinator] Writing Tools should be triggered by:");
+        NSLog(@"[Coordinator]   - Edit menu → Writing Tools (when system provides it)");
+        NSLog(@"[Coordinator]   - Keyboard shortcuts (Cmd+Shift+W or similar)");
+        NSLog(@"[Coordinator]   - System hover UI (if enabled)");
+        NSLog(@"[Coordinator] The coordinator will respond via delegate methods when system initiates.");
     }
 }
 
