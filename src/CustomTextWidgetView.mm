@@ -72,6 +72,11 @@
     return YES;
 }
 
+- (BOOL)isFlipped {
+    // Use top-left coordinate system (like UIKit/text layout)
+    return YES;
+}
+
 // MARK: - Drawing
 
 - (void)drawRect:(NSRect)dirtyRect {
