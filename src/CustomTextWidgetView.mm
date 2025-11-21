@@ -11,11 +11,20 @@
     NSColor* _textColor;
     NSColor* _backgroundColor;
     NSColor* _selectionColor;
+
+    // For text selection with mouse
+    BOOL _isDragging;
+    NSPoint _mouseDownPoint;
+    NSUInteger _mouseDownCharIndex;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect;
 - (void)setWidget:(CustomTextWidget*)widget;
 - (CustomTextWidget*)widget;
+
+// Helper methods for text selection
+- (NSUInteger)characterIndexForPoint:(NSPoint)point;
+- (NSRect)textRect;
 
 @end
 
@@ -29,6 +38,11 @@
         _textColor = [NSColor textColor];
         _backgroundColor = [NSColor textBackgroundColor];
         _selectionColor = [NSColor selectedTextBackgroundColor];
+
+        // Initialize mouse tracking state
+        _isDragging = NO;
+        _mouseDownPoint = NSZeroPoint;
+        _mouseDownCharIndex = 0;
     }
     return self;
 }
@@ -76,22 +90,46 @@
     size_t selStart, selLength;
     _widget->getSelectionRange(selStart, selLength);
 
-    NSRect textRect = NSInsetRect(self.bounds, 10, 10);
+    NSRect textRect = [self textRect];
 
     // STEP 1: Draw background
-    if (selLength > 0) {
-        // Draw selection background for the entire text area
-        [[_selectionColor colorWithAlphaComponent:0.3] setFill];
-        NSRectFill(textRect);
+    [_backgroundColor setFill];
+    NSRectFill(dirtyRect);
 
-        NSLog(@"Drawing selection: start=%zu, length=%zu", selStart, selLength);
-    } else {
-        // No selection - just background color
-        [_backgroundColor setFill];
-        NSRectFill(dirtyRect);
+    // STEP 2: Draw selection highlight (if any)
+    if (selLength > 0) {
+        // Create attributed string to measure text
+        NSDictionary* attributes = @{
+            NSFontAttributeName: _font
+        };
+        NSAttributedString* attrString = [[NSAttributedString alloc] initWithString:nsText attributes:attributes];
+
+        // Calculate selection rectangle
+        NSRange beforeSelection = NSMakeRange(0, selStart);
+        NSAttributedString* beforeText = [attrString attributedSubstringFromRange:beforeSelection];
+        CGSize beforeSize = [beforeText size];
+
+        NSRange selectionRange = NSMakeRange(0, selStart + selLength);
+        NSAttributedString* selectedText = [attrString attributedSubstringFromRange:selectionRange];
+        CGSize selectedSize = [selectedText size];
+
+        CGFloat selectionWidth = selectedSize.width - beforeSize.width;
+
+        // Draw selection background
+        NSRect selectionRect = NSMakeRect(textRect.origin.x + beforeSize.width,
+                                          textRect.origin.y,
+                                          selectionWidth,
+                                          beforeSize.height + 4); // Add some padding
+
+        [[_selectionColor colorWithAlphaComponent:0.4] setFill];
+        NSRectFill(selectionRect);
+
+        NSLog(@"Drawing selection: start=%zu, length=%zu, rect=(%.1f, %.1f, %.1f, %.1f)",
+              selStart, selLength, selectionRect.origin.x, selectionRect.origin.y,
+              selectionRect.size.width, selectionRect.size.height);
     }
 
-    // STEP 2: Draw text on top of selection
+    // STEP 3: Draw text on top of selection
     NSDictionary* attributes = @{
         NSFontAttributeName: _font,
         NSForegroundColorAttributeName: _textColor
@@ -99,7 +137,7 @@
 
     [nsText drawInRect:textRect withAttributes:attributes];
 
-    // STEP 3: Draw border around text area when focused
+    // STEP 4: Draw border around text area when focused
     if ([[self window] firstResponder] == self) {
         [[NSColor systemBlueColor] setStroke];
         NSBezierPath* border = [NSBezierPath bezierPathWithRect:NSInsetRect(self.bounds, 2, 2)];
@@ -108,18 +146,147 @@
     }
 }
 
+// MARK: - Helper Methods
+
+- (NSRect)textRect {
+    return NSInsetRect(self.bounds, 10, 10);
+}
+
+- (NSUInteger)characterIndexForPoint:(NSPoint)point {
+    if (!_widget) {
+        return 0;
+    }
+
+    std::string text = _widget->getText();
+    NSString* nsText = [NSString stringWithUTF8String:text.c_str()];
+
+    if ([nsText length] == 0) {
+        return 0;
+    }
+
+    // Create attributed string for text measurement
+    NSDictionary* attributes = @{
+        NSFontAttributeName: _font
+    };
+    NSAttributedString* attrString = [[NSAttributedString alloc] initWithString:nsText attributes:attributes];
+
+    NSRect textRect = [self textRect];
+
+    // Convert point to text rect coordinate system
+    NSPoint localPoint = NSMakePoint(point.x - textRect.origin.x,
+                                     point.y - textRect.origin.y);
+
+    // If click is before text, return 0
+    if (localPoint.x <= 0 || localPoint.y < 0 || localPoint.y > textRect.size.height) {
+        return 0;
+    }
+
+    // Find the character index by measuring text width
+    CGFloat totalWidth = 0;
+    NSUInteger bestIndex = 0;
+    CGFloat minDistance = CGFLOAT_MAX;
+
+    for (NSUInteger i = 0; i <= [nsText length]; i++) {
+        NSRange range = NSMakeRange(0, i);
+        NSAttributedString* substring = [attrString attributedSubstringFromRange:range];
+
+        CGSize size = [substring size];
+        CGFloat distance = fabs(size.width - localPoint.x);
+
+        if (distance < minDistance) {
+            minDistance = distance;
+            bestIndex = i;
+        }
+
+        // If we've passed the click point, stop
+        if (size.width > localPoint.x) {
+            break;
+        }
+    }
+
+    NSLog(@"Click at (%.1f, %.1f) -> character index %lu", point.x, point.y, (unsigned long)bestIndex);
+
+    return bestIndex;
+}
+
 // MARK: - Mouse Handling
 
 - (void)mouseDown:(NSEvent *)event {
     [[self window] makeFirstResponder:self];
 
-    if (_widget) {
-        // Select all text on click (simplified)
+    if (!_widget) {
+        return;
+    }
+
+    // Convert point to view coordinates
+    NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+
+    // Get character index at click point
+    _mouseDownCharIndex = [self characterIndexForPoint:point];
+    _mouseDownPoint = point;
+    _isDragging = YES;
+
+    // Start with zero-length selection at click point
+    _widget->setSelection(_mouseDownCharIndex, 0);
+    [self setNeedsDisplay:YES];
+
+    NSLog(@"Mouse down at character %lu", (unsigned long)_mouseDownCharIndex);
+}
+
+- (void)mouseDragged:(NSEvent *)event {
+    if (!_widget || !_isDragging) {
+        return;
+    }
+
+    // Convert point to view coordinates
+    NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+
+    // Get character index at current drag point
+    NSUInteger currentCharIndex = [self characterIndexForPoint:point];
+
+    // Calculate selection range
+    NSUInteger selStart, selLength;
+
+    if (currentCharIndex >= _mouseDownCharIndex) {
+        // Dragging forward
+        selStart = _mouseDownCharIndex;
+        selLength = currentCharIndex - _mouseDownCharIndex;
+    } else {
+        // Dragging backward
+        selStart = currentCharIndex;
+        selLength = _mouseDownCharIndex - currentCharIndex;
+    }
+
+    // Update selection
+    _widget->setSelection(selStart, selLength);
+    [self setNeedsDisplay:YES];
+
+    // Reduce log spam - only log every 10 pixels of movement
+    static NSPoint lastLogPoint = {0, 0};
+    if (fabs(point.x - lastLogPoint.x) > 10 || fabs(point.y - lastLogPoint.y) > 10) {
+        NSLog(@"Dragging: selection [%lu, %lu]", (unsigned long)selStart, (unsigned long)selLength);
+        lastLogPoint = point;
+    }
+}
+
+- (void)mouseUp:(NSEvent *)event {
+    if (!_widget) {
+        return;
+    }
+
+    _isDragging = NO;
+
+    size_t selStart, selLength;
+    _widget->getSelectionRange(selStart, selLength);
+
+    NSLog(@"Mouse up: final selection [%zu, %zu]", selStart, selLength);
+
+    // Handle double-click to select all
+    if ([event clickCount] == 2) {
         std::string text = _widget->getText();
         _widget->setSelection(0, text.length());
         [self setNeedsDisplay:YES];
-
-        NSLog(@"Text selected: %zu characters", text.length());
+        NSLog(@"Double-click: selected all %zu characters", text.length());
     }
 }
 
@@ -127,11 +294,25 @@
     [[self window] makeFirstResponder:self];
 
     if (_widget) {
-        // Make sure text is selected
-        std::string text = _widget->getText();
-        if (text.length() > 0) {
-            _widget->setSelection(0, text.length());
-            [self setNeedsDisplay:YES];
+        // Check if there's already a selection
+        size_t selStart, selLength;
+        _widget->getSelectionRange(selStart, selLength);
+
+        // If no selection, check if right-click is over text
+        if (selLength == 0) {
+            NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+            NSUInteger charIndex = [self characterIndexForPoint:point];
+
+            // Select word at click point, or all text if we can't determine word boundaries
+            // For simplicity, just select all for now
+            std::string text = _widget->getText();
+            if (text.length() > 0) {
+                _widget->setSelection(0, text.length());
+                [self setNeedsDisplay:YES];
+                NSLog(@"Right-click with no selection: selecting all text");
+            }
+        } else {
+            NSLog(@"Right-click with existing selection [%zu, %zu]", selStart, selLength);
         }
     }
 
