@@ -4,7 +4,7 @@
 
 // Objective-C++ NSView subclass using the NEW Writing Tools Coordinator API
 // This provides inline Writing Tools UI (macOS 15+)
-@interface CoordinatorTextWidgetView : NSView <NSTextViewDelegate>
+@interface CoordinatorTextWidgetView : NSView <NSTextInputClient, NSTextViewDelegate>
 {
     CustomTextWidget* _widget;
     NSFont* _font;
@@ -48,11 +48,10 @@
         _mouseDownCharIndex = 0;
         _isWritingToolsActive = NO;
 
-        // IMPORTANT: Enable Writing Tools behavior (macOS 15+)
-        if (@available(macOS 15.0, *)) {
-            // Set the writing tools behavior to default
-            self.writingToolsBehavior = NSWritingToolsBehaviorDefault;
-        }
+        // For custom NSView with Writing Tools Coordinator API:
+        // NSView has a writingToolsCoordinator property in macOS 15+
+        // We don't need to set writingToolsBehavior (that's only for NSTextView)
+        // The coordinator is automatically created when needed by the system
     }
     return self;
 }
@@ -425,6 +424,94 @@
     }
 
     [super keyDown:event];
+}
+
+// MARK: - NSTextInputClient Protocol (Required for Writing Tools Coordinator)
+
+- (void)insertText:(id)string replacementRange:(NSRange)replacementRange {
+    if (!_widget) return;
+
+    NSString* nsText = [string isKindOfClass:[NSAttributedString class]] ?
+                      [(NSAttributedString*)string string] : (NSString*)string;
+
+    if (replacementRange.location == NSNotFound) {
+        // Replace current selection
+        _widget->replaceSelection([nsText UTF8String]);
+    } else {
+        // Replace specific range
+        _widget->setSelection(replacementRange.location, replacementRange.length);
+        _widget->replaceSelection([nsText UTF8String]);
+    }
+
+    [self setNeedsDisplay:YES];
+    NSLog(@"[Coordinator] Inserted text: %@", nsText);
+}
+
+- (void)setMarkedText:(id)string selectedRange:(NSRange)selectedRange replacementRange:(NSRange)replacementRange {
+    // For IME input - not needed for Writing Tools, but required by protocol
+}
+
+- (void)unmarkText {
+    // For IME input - not needed for Writing Tools, but required by protocol
+}
+
+- (NSRange)selectedRange {
+    if (!_widget) return NSMakeRange(NSNotFound, 0);
+
+    size_t selStart, selLength;
+    _widget->getSelectionRange(selStart, selLength);
+    return NSMakeRange(selStart, selLength);
+}
+
+- (NSRange)markedRange {
+    // No marked text in our simple implementation
+    return NSMakeRange(NSNotFound, 0);
+}
+
+- (BOOL)hasMarkedText {
+    return NO;
+}
+
+- (nullable NSAttributedString *)attributedSubstringForProposedRange:(NSRange)range actualRange:(nullable NSRangePointer)actualRange {
+    if (!_widget) return nil;
+
+    std::string text = _widget->getText();
+    NSString* nsText = [NSString stringWithUTF8String:text.c_str()];
+
+    if (range.location >= [nsText length]) {
+        if (actualRange) *actualRange = NSMakeRange(NSNotFound, 0);
+        return nil;
+    }
+
+    // Clamp range to valid bounds
+    NSRange validRange = range;
+    if (NSMaxRange(validRange) > [nsText length]) {
+        validRange.length = [nsText length] - validRange.location;
+    }
+
+    if (actualRange) *actualRange = validRange;
+
+    NSString* substring = [nsText substringWithRange:validRange];
+    return [[NSAttributedString alloc] initWithString:substring attributes:@{NSFontAttributeName: _font}];
+}
+
+- (NSArray<NSAttributedStringKey> *)validAttributesForMarkedText {
+    return @[NSFontAttributeName, NSForegroundColorAttributeName];
+}
+
+- (NSRect)firstRectForCharacterRange:(NSRange)range actualRange:(nullable NSRangePointer)actualRange {
+    // Return rectangle for character range (used by input methods)
+    NSRect textRect = [self textRect];
+
+    if (actualRange) *actualRange = range;
+
+    // Return a rect at the selection position
+    return NSMakeRect(textRect.origin.x, textRect.origin.y, 100, 20);
+}
+
+- (NSUInteger)characterIndexForPoint:(NSPoint)point {
+    // This is already implemented above as a helper method
+    return [self characterIndexForPoint:point];
 }
 
 @end
