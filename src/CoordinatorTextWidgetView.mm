@@ -522,5 +522,6 @@ extern "C" {
     void SetWidgetForCoordinatorView(void* viewPtr, CustomTextWidget* widget) {
         CoordinatorTextWidgetView* view = (__bridge CoordinatorTextWidgetView*)viewPtr;
         [view setWidget:widget];
+        [view setNeedsDisplay:YES];  // Trigger initial draw
     }
 }

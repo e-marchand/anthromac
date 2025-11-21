@@ -550,6 +550,7 @@ extern "C" {
     void SetWidgetForView(void* viewPtr, CustomTextWidget* widget) {
         CustomTextWidgetView* view = (__bridge CustomTextWidgetView*)viewPtr;
         [view setWidget:widget];
+        [view setNeedsDisplay:YES];  // Trigger initial draw
     }
 
     void* GetViewPointer(void* viewPtr) {
