@@ -63,40 +63,48 @@
 - (void)drawRect:(NSRect)dirtyRect {
     [super drawRect:dirtyRect];
 
-    // Draw background
-    [_backgroundColor setFill];
-    NSRectFill(dirtyRect);
-
     if (!_widget) {
+        // No widget - just draw background
+        [_backgroundColor setFill];
+        NSRectFill(dirtyRect);
         return;
     }
 
-    // Get text from widget
+    // Get text and selection info
     std::string text = _widget->getText();
     NSString* nsText = [NSString stringWithUTF8String:text.c_str()];
+    size_t selStart, selLength;
+    _widget->getSelectionRange(selStart, selLength);
 
-    // Draw text
+    NSRect textRect = NSInsetRect(self.bounds, 10, 10);
+
+    // STEP 1: Draw background
+    if (selLength > 0) {
+        // Draw selection background for the entire text area
+        [[_selectionColor colorWithAlphaComponent:0.3] setFill];
+        NSRectFill(textRect);
+
+        NSLog(@"Drawing selection: start=%zu, length=%zu", selStart, selLength);
+    } else {
+        // No selection - just background color
+        [_backgroundColor setFill];
+        NSRectFill(dirtyRect);
+    }
+
+    // STEP 2: Draw text on top of selection
     NSDictionary* attributes = @{
         NSFontAttributeName: _font,
         NSForegroundColorAttributeName: _textColor
     };
 
-    NSRect textRect = NSInsetRect(self.bounds, 10, 10);
     [nsText drawInRect:textRect withAttributes:attributes];
 
-    // Draw selection highlight if there is one
-    size_t selStart, selLength;
-    _widget->getSelectionRange(selStart, selLength);
-
-    if (selLength > 0) {
-        // Simple selection visualization
-        // In a real implementation, you'd calculate proper text metrics
-        NSRect selectionRect = NSMakeRect(textRect.origin.x,
-                                         textRect.origin.y,
-                                         textRect.size.width,
-                                         20);
-        [_selectionColor setFill];
-        NSRectFillUsingOperation(selectionRect, NSCompositingOperationSourceOver);
+    // STEP 3: Draw border around text area when focused
+    if ([[self window] firstResponder] == self) {
+        [[NSColor systemBlueColor] setStroke];
+        NSBezierPath* border = [NSBezierPath bezierPathWithRect:NSInsetRect(self.bounds, 2, 2)];
+        [border setLineWidth:2.0];
+        [border stroke];
     }
 }
 
