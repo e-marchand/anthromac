@@ -48,11 +48,10 @@
         _mouseDownCharIndex = 0;
         _isWritingToolsActive = NO;
 
-        // IMPORTANT: Enable Writing Tools behavior
+        // IMPORTANT: Enable Writing Tools behavior (macOS 15+)
         if (@available(macOS 15.0, *)) {
-            // Enable default writing tools behavior
-            // This allows Writing Tools to appear inline
-            [self setWritingToolsBehavior:NSWritingToolsBehaviorDefault];
+            // Set the writing tools behavior to default
+            self.writingToolsBehavior = NSWritingToolsBehaviorDefault;
         }
     }
     return self;
@@ -131,7 +130,8 @@
     // STEP 1: Draw background
     // Highlight differently when Writing Tools is active
     if (_isWritingToolsActive) {
-        [[NSColor systemYellowColor] colorWithAlphaComponent:0.1] setFill];
+        NSColor* highlightColor = [[NSColor systemYellowColor] colorWithAlphaComponent:0.1];
+        [highlightColor setFill];
     } else {
         [_backgroundColor setFill];
     }
@@ -177,7 +177,8 @@
                 selectionRect.origin.y += textRect.origin.y;
 
                 // Draw selection background
-                [[_selectionColor colorWithAlphaComponent:0.4] setFill];
+                NSColor* selectionFillColor = [_selectionColor colorWithAlphaComponent:0.4];
+                [selectionFillColor setFill];
                 NSRectFill(selectionRect);
             }
         }];
