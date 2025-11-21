@@ -2,15 +2,22 @@
 #include "CustomTextWidget.h"
 #include <iostream>
 
-// Forward declarations from CustomTextWidgetView.mm
+// Forward declarations from CustomTextWidgetView.mm (Services approach)
 extern "C" {
     void* CreateCustomTextWidgetView(double x, double y, double width, double height);
     void SetWidgetForView(void* viewPtr, CustomTextWidget* widget);
 }
 
+// Forward declarations from CoordinatorTextWidgetView.mm (Coordinator API approach)
+extern "C" {
+    void* CreateCoordinatorTextWidgetView(double x, double y, double width, double height);
+    void SetWidgetForCoordinatorView(void* viewPtr, CustomTextWidget* widget);
+}
+
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 @property (strong, nonatomic) NSWindow* window;
-@property (assign, nonatomic) CustomTextWidget* widget;
+@property (assign, nonatomic) CustomTextWidget* widgetServices;
+@property (assign, nonatomic) CustomTextWidget* widgetCoordinator;
 @end
 
 @implementation AppDelegate
@@ -58,8 +65,8 @@ extern "C" {
     // Set up application menu with Services
     [self setupMenuBar];
 
-    // Create main window
-    NSRect frame = NSMakeRect(0, 0, 800, 600);
+    // Create main window - wider to fit two widgets side by side
+    NSRect frame = NSMakeRect(0, 0, 1200, 600);
     NSWindowStyleMask style = NSWindowStyleMaskTitled |
                               NSWindowStyleMaskClosable |
                               NSWindowStyleMaskMiniaturizable |
@@ -70,77 +77,124 @@ extern "C" {
                                                 backing:NSBackingStoreBuffered
                                                   defer:NO];
 
-    [self.window setTitle:@"Custom Text Widget - Apple Intelligence Writing Tools Demo"];
+    [self.window setTitle:@"Writing Tools Demo: Two Approaches Side-by-Side"];
     [self.window center];
 
-    // Create C++ widget
-    self.widget = new CustomTextWidget();
+    // Create container view
+    NSView* containerView = [[NSView alloc] initWithFrame:frame];
 
-    // Set initial text
-    std::string initialText =
-        "This is a custom C++ text widget that supports Apple Intelligence Writing Tools!\n\n"
-        "To test Writing Tools:\n"
-        "1. Click on the text to select it\n"
-        "2. Right-click (or Control+click) to open the context menu\n"
-        "3. Look for 'Writing Tools' in the Services submenu\n"
-        "4. Select options like 'Summarize', 'Proofread', 'Rewrite', etc.\n\n"
-        "The text will be sent to Apple Intelligence and the results will appear here!\n\n"
-        "This demonstrates how to integrate Writing Tools with custom GUI widgets "
-        "that don't use standard NSTextField or NSTextView. "
-        "The implementation uses NSServicesMenuRequestor protocol to bridge "
-        "between your custom C++ rendering and macOS native AI features.";
+    // =================================================================
+    // LEFT WIDGET: NSServicesMenuRequestor (Services menu approach)
+    // =================================================================
 
-    self.widget->setText(initialText);
+    self.widgetServices = new CustomTextWidget();
+    std::string servicesText =
+        "LEFT: NSServicesMenuRequestor\n\n"
+        "This widget uses the Services menu approach.\n\n"
+        "To test:\n"
+        "1. Click and drag to select text\n"
+        "2. Right-click → Services\n"
+        "3. Choose Writing Tools options\n\n"
+        "This is the traditional way to integrate with macOS Services.";
 
-    // Create custom view (Objective-C++ NSView)
-    // Leave space at top for instructions label (50 pixels)
-    void* viewPtr = CreateCustomTextWidgetView(0, 0, 800, 550);
-    SetWidgetForView(viewPtr, self.widget);
+    self.widgetServices->setText(servicesText);
 
-    NSView* customView = (__bridge NSView*)viewPtr;
-    customView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    void* servicesViewPtr = CreateCustomTextWidgetView(0, 70, 590, 480);
+    SetWidgetForView(servicesViewPtr, self.widgetServices);
 
-    // Add instructions label at the TOP of the window
-    NSTextField* instructionsLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(10, 555, 780, 40)];
-    [instructionsLabel setStringValue:@"Click and drag to select text, then: Right-click OR Edit menu → Services → Writing Tools (Summarize, Proofread, Rewrite, etc.)"];
+    NSView* servicesView = (__bridge NSView*)servicesViewPtr;
+    servicesView.autoresizingMask = NSViewHeightSizable | NSViewMaxXMargin;
+
+    // Label for services widget
+    NSTextField* servicesLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(10, 555, 580, 40)];
+    [servicesLabel setStringValue:@"📋 SERVICES APPROACH: NSServicesMenuRequestor\nRight-click → Services → Writing Tools"];
+    [servicesLabel setBezeled:YES];
+    [servicesLabel setDrawsBackground:YES];
+    [servicesLabel setBackgroundColor:[[NSColor systemBlueColor] colorWithAlphaComponent:0.1]];
+    [servicesLabel setEditable:NO];
+    [servicesLabel setSelectable:NO];
+    [servicesLabel setFont:[NSFont boldSystemFontOfSize:10]];
+    [servicesLabel setTextColor:[NSColor systemBlueColor]];
+    servicesLabel.autoresizingMask = NSViewMaxXMargin | NSViewMaxYMargin;
+
+    // =================================================================
+    // RIGHT WIDGET: NSWritingToolsCoordinator (modern inline approach)
+    // =================================================================
+
+    self.widgetCoordinator = new CustomTextWidget();
+    std::string coordinatorText =
+        "RIGHT: NSWritingToolsCoordinator\n\n"
+        "This widget uses the modern Writing Tools Coordinator API.\n\n"
+        "To test:\n"
+        "1. Click and drag to select text\n"
+        "2. Right-click for inline UI\n"
+        "3. Yellow border when active\n\n"
+        "This is the modern API with inline Writing Tools UI and delegate callbacks.";
+
+    self.widgetCoordinator->setText(coordinatorText);
+
+    void* coordinatorViewPtr = CreateCoordinatorTextWidgetView(610, 70, 590, 480);
+    SetWidgetForCoordinatorView(coordinatorViewPtr, self.widgetCoordinator);
+
+    NSView* coordinatorView = (__bridge NSView*)coordinatorViewPtr;
+    coordinatorView.autoresizingMask = NSViewHeightSizable | NSViewMinXMargin;
+
+    // Label for coordinator widget
+    NSTextField* coordinatorLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(610, 555, 580, 40)];
+    [coordinatorLabel setStringValue:@"✨ COORDINATOR APPROACH: NSWritingToolsCoordinator\nInline UI + Delegate callbacks (macOS 15+)"];
+    [coordinatorLabel setBezeled:YES];
+    [coordinatorLabel setDrawsBackground:YES];
+    [coordinatorLabel setBackgroundColor:[[NSColor systemYellowColor] colorWithAlphaComponent:0.1]];
+    [coordinatorLabel setEditable:NO];
+    [coordinatorLabel setSelectable:NO];
+    [coordinatorLabel setFont:[NSFont boldSystemFontOfSize:10]];
+    [coordinatorLabel setTextColor:[NSColor systemYellowColor]];
+    coordinatorLabel.autoresizingMask = NSViewMinXMargin | NSViewMaxYMargin;
+
+    // Add top instruction label
+    NSTextField* instructionsLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(10, 5, 1180, 60)];
+    [instructionsLabel setStringValue:@"Two different approaches to integrating Apple Intelligence Writing Tools:\n🔹 LEFT uses Services menu (traditional) • RIGHT uses Coordinator API (modern inline)\nBoth work with custom C++ GUI widgets without NSTextField/NSTextView!"];
     [instructionsLabel setBezeled:NO];
     [instructionsLabel setDrawsBackground:YES];
     [instructionsLabel setBackgroundColor:[NSColor controlBackgroundColor]];
     [instructionsLabel setEditable:NO];
     [instructionsLabel setSelectable:NO];
-    [instructionsLabel setFont:[NSFont boldSystemFontOfSize:11]];
+    [instructionsLabel setFont:[NSFont systemFontOfSize:11]];
     [instructionsLabel setTextColor:[NSColor secondaryLabelColor]];
+    [instructionsLabel setAlignment:NSTextAlignmentCenter];
     instructionsLabel.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
 
-    // Create container view
-    NSView* containerView = [[NSView alloc] initWithFrame:frame];
-    [containerView addSubview:customView];
+    // Add all views to container
+    [containerView addSubview:servicesView];
+    [containerView addSubview:coordinatorView];
+    [containerView addSubview:servicesLabel];
+    [containerView addSubview:coordinatorLabel];
     [containerView addSubview:instructionsLabel];
 
     [self.window setContentView:containerView];
     [self.window makeKeyAndOrderFront:nil];
 
     // Log instructions
-    NSLog(@"==================================================");
-    NSLog(@"Custom Text Widget with Writing Tools Demo");
-    NSLog(@"==================================================");
-    NSLog(@"To use Writing Tools:");
-    NSLog(@"1. Click on the text area to select it");
-    NSLog(@"2. Access Services menu either:");
-    NSLog(@"   - Right-click → Services");
-    NSLog(@"   - OR use menu bar: Edit → Services");
-    NSLog(@"3. Look for Writing Tools options");
-    NSLog(@"4. Choose: Summarize, Proofread, Rewrite, etc.");
-    NSLog(@"==================================================");
-    NSLog(@"NOTE: Writing Tools requires macOS 15+ (Sequoia)");
-    NSLog(@"      with Apple Intelligence enabled");
-    NSLog(@"==================================================");
+    NSLog(@"====================================================================");
+    NSLog(@"Writing Tools Demo - Two Approaches Side-by-Side");
+    NSLog(@"====================================================================");
+    NSLog(@"LEFT:  NSServicesMenuRequestor (Services menu)");
+    NSLog(@"RIGHT: NSWritingToolsCoordinator (inline UI + delegates)");
+    NSLog(@"");
+    NSLog(@"Both approaches work with custom C++ text widgets!");
+    NSLog(@"====================================================================");
+    NSLog(@"Requirements: macOS 15+ with Apple Intelligence enabled");
+    NSLog(@"====================================================================");
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
-    if (self.widget) {
-        delete self.widget;
-        self.widget = nullptr;
+    if (self.widgetServices) {
+        delete self.widgetServices;
+        self.widgetServices = nullptr;
+    }
+    if (self.widgetCoordinator) {
+        delete self.widgetCoordinator;
+        self.widgetCoordinator = nullptr;
     }
 }
 

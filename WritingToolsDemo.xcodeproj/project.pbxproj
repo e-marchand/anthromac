@@ -11,6 +11,7 @@
 		A1000002000000000000001 /* CustomTextWidgetView.mm in Sources */ = {isa = PBXBuildFile; fileRef = A2000002000000000000001 /* CustomTextWidgetView.mm */; };
 		A1000003000000000000001 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = A2000003000000000000001 /* main.mm */; };
 		A1000004000000000000001 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A3000001000000000000001 /* Cocoa.framework */; };
+		A1000005000000000000001 /* CoordinatorTextWidgetView.mm in Sources */ = {isa = PBXBuildFile; fileRef = A2000005000000000000001 /* CoordinatorTextWidgetView.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -18,6 +19,7 @@
 		A2000002000000000000001 /* CustomTextWidgetView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = CustomTextWidgetView.mm; sourceTree = "<group>"; };
 		A2000003000000000000001 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		A2000004000000000000001 /* CustomTextWidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CustomTextWidget.h; sourceTree = "<group>"; };
+		A2000005000000000000001 /* CoordinatorTextWidgetView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = CoordinatorTextWidgetView.mm; sourceTree = "<group>"; };
 		A3000001000000000000001 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		A4000001000000000000001 /* WritingToolsDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WritingToolsDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -49,6 +51,7 @@
 			children = (
 				A2000001000000000000001 /* CustomTextWidget.cpp */,
 				A2000002000000000000001 /* CustomTextWidgetView.mm */,
+				A2000005000000000000001 /* CoordinatorTextWidgetView.mm */,
 				A2000003000000000000001 /* main.mm */,
 			);
 			path = src;
@@ -136,6 +139,7 @@
 			files = (
 				A1000001000000000000001 /* CustomTextWidget.cpp in Sources */,
 				A1000002000000000000001 /* CustomTextWidgetView.mm in Sources */,
+				A1000005000000000000001 /* CoordinatorTextWidgetView.mm in Sources */,
 				A1000003000000000000001 /* main.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

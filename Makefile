@@ -21,11 +21,11 @@ APP_RESOURCES = $(APP_CONTENTS)/Resources
 
 # Source files
 CPP_SOURCES = $(SRC_DIR)/CustomTextWidget.cpp
-OBJCXX_SOURCES = $(SRC_DIR)/CustomTextWidgetView.mm $(SRC_DIR)/main.mm
+OBJCXX_SOURCES = $(SRC_DIR)/CustomTextWidgetView.mm $(SRC_DIR)/CoordinatorTextWidgetView.mm $(SRC_DIR)/main.mm
 
 # Object files
 CPP_OBJECTS = $(BUILD_DIR)/CustomTextWidget.o
-OBJCXX_OBJECTS = $(BUILD_DIR)/CustomTextWidgetView.o $(BUILD_DIR)/main.o
+OBJCXX_OBJECTS = $(BUILD_DIR)/CustomTextWidgetView.o $(BUILD_DIR)/CoordinatorTextWidgetView.o $(BUILD_DIR)/main.o
 
 # Targets
 .PHONY: all clean run info
