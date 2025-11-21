@@ -15,7 +15,49 @@ extern "C" {
 
 @implementation AppDelegate
 
+- (void)setupMenuBar {
+    // Create main menu bar
+    NSMenu* mainMenu = [[NSMenu alloc] init];
+
+    // App Menu
+    NSMenuItem* appMenuItem = [[NSMenuItem alloc] init];
+    NSMenu* appMenu = [[NSMenu alloc] init];
+    [appMenu addItemWithTitle:@"Quit" action:@selector(terminate:) keyEquivalent:@"q"];
+    [appMenuItem setSubmenu:appMenu];
+    [mainMenu addItem:appMenuItem];
+
+    // Edit Menu (CRITICAL for Services!)
+    NSMenuItem* editMenuItem = [[NSMenuItem alloc] initWithTitle:@"Edit" action:nil keyEquivalent:@""];
+    NSMenu* editMenu = [[NSMenu alloc] initWithTitle:@"Edit"];
+
+    [editMenu addItemWithTitle:@"Copy" action:@selector(copy:) keyEquivalent:@"c"];
+    [editMenu addItemWithTitle:@"Paste" action:@selector(paste:) keyEquivalent:@"v"];
+    [editMenu addItemWithTitle:@"Select All" action:@selector(selectAll:) keyEquivalent:@"a"];
+
+    [editMenu addItem:[NSMenuItem separatorItem]];
+
+    // THIS IS CRITICAL: Services submenu
+    NSMenuItem* servicesMenuItem = [[NSMenuItem alloc] initWithTitle:@"Services" action:nil keyEquivalent:@""];
+    NSMenu* servicesMenu = [[NSMenu alloc] initWithTitle:@"Services"];
+    [servicesMenuItem setSubmenu:servicesMenu];
+    [editMenu addItem:servicesMenuItem];
+
+    // Register the services menu with NSApplication
+    [[NSApplication sharedApplication] setServicesMenu:servicesMenu];
+
+    [editMenuItem setSubmenu:editMenu];
+    [mainMenu addItem:editMenuItem];
+
+    // Set the main menu
+    [[NSApplication sharedApplication] setMainMenu:mainMenu];
+
+    NSLog(@"✅ Menu bar set up with Services submenu");
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
+    // Set up application menu with Services
+    [self setupMenuBar];
+
     // Create main window
     NSRect frame = NSMakeRect(0, 0, 800, 600);
     NSWindowStyleMask style = NSWindowStyleMaskTitled |
@@ -59,12 +101,12 @@ extern "C" {
 
     // Add instructions label
     NSTextField* instructionsLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(10, 560, 780, 30)];
-    [instructionsLabel setStringValue:@"Click text, then right-click → Services → Writing Tools to test AI features (Summarize, Proofread, Rewrite, etc.)"];
+    [instructionsLabel setStringValue:@"Click text to select, then: Right-click OR Edit menu → Services to access Writing Tools (Summarize, Proofread, Rewrite, etc.)"];
     [instructionsLabel setBezeled:NO];
     [instructionsLabel setDrawsBackground:NO];
     [instructionsLabel setEditable:NO];
     [instructionsLabel setSelectable:NO];
-    [instructionsLabel setFont:[NSFont boldSystemFontOfSize:12]];
+    [instructionsLabel setFont:[NSFont boldSystemFontOfSize:11]];
     [instructionsLabel setTextColor:[NSColor secondaryLabelColor]];
     instructionsLabel.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
 
@@ -77,15 +119,20 @@ extern "C" {
     [self.window makeKeyAndOrderFront:nil];
 
     // Log instructions
-    NSLog(@"===========================================");
+    NSLog(@"==================================================");
     NSLog(@"Custom Text Widget with Writing Tools Demo");
-    NSLog(@"===========================================");
+    NSLog(@"==================================================");
     NSLog(@"To use Writing Tools:");
     NSLog(@"1. Click on the text area to select it");
-    NSLog(@"2. Right-click to open context menu");
-    NSLog(@"3. Navigate to Services > Writing Tools");
-    NSLog(@"4. Choose an option (Summarize, Proofread, etc.)");
-    NSLog(@"===========================================");
+    NSLog(@"2. Access Services menu either:");
+    NSLog(@"   - Right-click → Services");
+    NSLog(@"   - OR use menu bar: Edit → Services");
+    NSLog(@"3. Look for Writing Tools options");
+    NSLog(@"4. Choose: Summarize, Proofread, Rewrite, etc.");
+    NSLog(@"==================================================");
+    NSLog(@"NOTE: Writing Tools requires macOS 15+ (Sequoia)");
+    NSLog(@"      with Apple Intelligence enabled");
+    NSLog(@"==================================================");
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
