@@ -509,11 +509,6 @@
     return NSMakeRect(textRect.origin.x, textRect.origin.y, 100, 20);
 }
 
-- (NSUInteger)characterIndexForPoint:(NSPoint)point {
-    // This is already implemented above as a helper method
-    return [self characterIndexForPoint:point];
-}
-
 @end
 
 // C interface for creating the coordinator view from C++
