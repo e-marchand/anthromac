@@ -97,8 +97,12 @@
 
     // Debug: Log text length on first draw
     static BOOL firstDraw = YES;
+    BOOL isFirstDraw = firstDraw;
     if (firstDraw) {
-        NSLog(@"[Services] drawRect called - text length: %lu, text: %@", (unsigned long)[nsText length], nsText);
+        NSLog(@"[Services] drawRect called - text length: %lu", (unsigned long)[nsText length]);
+        NSLog(@"[Services] text: %@", nsText);
+        NSLog(@"[Services] view bounds: %@", NSStringFromRect(self.bounds));
+        NSLog(@"[Services] text color: %@, bg color: %@", _textColor, _backgroundColor);
         firstDraw = NO;
     }
 
@@ -156,6 +160,12 @@
 
     // STEP 3: Draw text on top of selection
     NSRange glyphRange = [layoutManager glyphRangeForTextContainer:textContainer];
+
+    if (isFirstDraw) {
+        NSLog(@"[Services] textRect: %@", NSStringFromRect(textRect));
+        NSLog(@"[Services] glyphRange: %@, number of glyphs: %lu", NSStringFromRange(glyphRange), (unsigned long)glyphRange.length);
+    }
+
     [layoutManager drawGlyphsForGlyphRange:glyphRange atPoint:textRect.origin];
 
     // STEP 4: Draw border around text area when focused

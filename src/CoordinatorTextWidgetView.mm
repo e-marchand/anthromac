@@ -365,8 +365,19 @@
         }
     }
 
-    // Show default context menu (macOS will add Writing Tools automatically)
-    [NSMenu popUpContextMenu:[self menu] withEvent:event forView:self];
+    // Create context menu (macOS will add Writing Tools automatically for NSTextInputClient views)
+    NSMenu* menu = [[NSMenu alloc] initWithTitle:@""];
+
+    // Add standard editing items
+    [menu addItemWithTitle:@"Copy" action:@selector(copy:) keyEquivalent:@""];
+    [menu addItemWithTitle:@"Paste" action:@selector(paste:) keyEquivalent:@""];
+    [menu addItem:[NSMenuItem separatorItem]];
+    [menu addItemWithTitle:@"Select All" action:@selector(selectAll:) keyEquivalent:@""];
+
+    NSLog(@"[Coordinator] Showing context menu");
+
+    // Show the menu (Writing Tools should appear automatically for NSTextInputClient)
+    [NSMenu popUpContextMenu:menu withEvent:event forView:self];
 }
 
 // MARK: - Standard Text Operations
