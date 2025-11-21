@@ -461,39 +461,14 @@
 // MARK: - Writing Tools Trigger
 
 - (void)showWritingTools:(id)sender {
-    NSLog(@"[Coordinator] showWritingTools called");
-
-    if (@available(macOS 15.0, *)) {
-        // Try to trigger via responder chain with standard actions
-
-        // Try: _showWritingTools: (private API)
-        SEL showWT = NSSelectorFromString(@"_showWritingTools:");
-        if ([self respondsToSelector:showWT]) {
-            [self performSelector:showWT withObject:sender];
-            NSLog(@"[Coordinator] ✅ Triggered via _showWritingTools:");
-            return;
-        }
-
-        // Try: showWritingTools: (if it exists)
-        SEL showWT2 = NSSelectorFromString(@"showWritingTools:");
-        if ([self respondsToSelector:showWT2]) {
-            [self performSelector:showWT2 withObject:sender];
-            NSLog(@"[Coordinator] ✅ Triggered via showWritingTools:");
-            return;
-        }
-
-        // Try sending action up responder chain
-        if ([[NSApplication sharedApplication] sendAction:@selector(orderFrontCharacterPalette:) to:nil from:self]) {
-            NSLog(@"[Coordinator] Sent action to responder chain");
-        }
-
-        NSLog(@"[Coordinator] ⚠️ NSWritingToolsCoordinator doesn't support manual triggering");
-        NSLog(@"[Coordinator] Writing Tools should be triggered by:");
-        NSLog(@"[Coordinator]   - Edit menu → Writing Tools (when system provides it)");
-        NSLog(@"[Coordinator]   - Keyboard shortcuts (Cmd+Shift+W or similar)");
-        NSLog(@"[Coordinator]   - System hover UI (if enabled)");
-        NSLog(@"[Coordinator] The coordinator will respond via delegate methods when system initiates.");
-    }
+    NSLog(@"[Coordinator] ⚠️ Writing Tools cannot be manually triggered via NSWritingToolsCoordinator");
+    NSLog(@"[Coordinator] The coordinator is passive and responds to system-initiated sessions");
+    NSLog(@"[Coordinator] Writing Tools should be triggered by:");
+    NSLog(@"[Coordinator]   - Edit menu → Writing Tools (when system provides it)");
+    NSLog(@"[Coordinator]   - Keyboard shortcuts (Cmd+Shift+W or similar)");
+    NSLog(@"[Coordinator]   - System hover UI (if enabled)");
+    NSLog(@"[Coordinator]");
+    NSLog(@"[Coordinator] For immediate manual triggering, use the LEFT widget (Services approach)");
 }
 
 // MARK: - Keyboard Shortcuts
