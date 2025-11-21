@@ -4,7 +4,7 @@
 
 // Objective-C++ NSView subclass using the NEW Writing Tools Coordinator API
 // This provides inline Writing Tools UI (macOS 15+)
-@interface CoordinatorTextWidgetView : NSView <NSTextInputClient, NSTextViewDelegate>
+@interface CoordinatorTextWidgetView : NSView <NSTextInputClient, NSTextViewDelegate, NSServicesMenuRequestor>
 {
     CustomTextWidget* _widget;
     NSFont* _font;
@@ -366,7 +366,7 @@
         }
     }
 
-    // Create context menu (macOS will add Writing Tools automatically for NSTextInputClient views)
+    // Create context menu with Writing Tools via Services
     NSMenu* menu = [[NSMenu alloc] initWithTitle:@""];
 
     // Add standard editing items
@@ -375,9 +375,23 @@
     [menu addItem:[NSMenuItem separatorItem]];
     [menu addItemWithTitle:@"Select All" action:@selector(selectAll:) keyEquivalent:@""];
 
-    NSLog(@"[Coordinator] Showing context menu");
+    [menu addItem:[NSMenuItem separatorItem]];
 
-    // Show the menu (Writing Tools should appear automatically for NSTextInputClient)
+    // CRITICAL: Add Services submenu for Writing Tools
+    NSMenuItem* servicesItem = [[NSMenuItem alloc] initWithTitle:@"Services"
+                                                          action:nil
+                                                   keyEquivalent:@""];
+    NSMenu* servicesMenu = [[NSMenu alloc] initWithTitle:@"Services"];
+    [servicesItem setSubmenu:servicesMenu];
+
+    // Register with services
+    [NSApplication sharedApplication].servicesMenu = servicesMenu;
+
+    [menu addItem:servicesItem];
+
+    NSLog(@"[Coordinator] Showing context menu with Services");
+
+    // Show the menu (Writing Tools will be in Services submenu)
     [NSMenu popUpContextMenu:menu withEvent:event forView:self];
 }
 
@@ -526,6 +540,76 @@
 
     // Return a rect at the selection position
     return NSMakeRect(textRect.origin.x, textRect.origin.y, 100, 20);
+}
+
+// MARK: - NSServicesMenuRequestor Protocol (For Writing Tools)
+
+- (id)validRequestorForSendType:(NSPasteboardType)sendType
+                     returnType:(NSPasteboardType)returnType {
+    // Check if we can provide text for services
+    if ([sendType isEqualToString:NSPasteboardTypeString] ||
+        [sendType isEqualToString:NSPasteboardTypeRTF]) {
+        if (_widget && !_widget->getText().empty()) {
+            NSLog(@"[Coordinator] validRequestor: YES for sendType=%@", sendType);
+            return self;
+        }
+    }
+
+    // Check if we can receive text from services
+    if ([returnType isEqualToString:NSPasteboardTypeString]) {
+        NSLog(@"[Coordinator] validRequestor: YES for returnType=%@", returnType);
+        return self;
+    }
+
+    return [super validRequestorForSendType:sendType returnType:returnType];
+}
+
+- (BOOL)writeSelectionToPasteboard:(NSPasteboard *)pboard
+                             types:(NSArray<NSPasteboardType> *)types {
+    if (!_widget) {
+        NSLog(@"[Coordinator] writeSelectionToPasteboard: NO (no widget)");
+        return NO;
+    }
+
+    std::string selectedText = _widget->getSelectedText();
+    if (selectedText.empty()) {
+        // If nothing selected, use all text
+        selectedText = _widget->getText();
+    }
+
+    NSString* nsText = [NSString stringWithUTF8String:selectedText.c_str()];
+
+    if (!nsText || [nsText length] == 0) {
+        NSLog(@"[Coordinator] writeSelectionToPasteboard: NO (empty text)");
+        return NO;
+    }
+
+    [pboard clearContents];
+    BOOL success = [pboard setString:nsText forType:NSPasteboardTypeString];
+
+    NSLog(@"[Coordinator] writeSelectionToPasteboard: %@ (%lu chars)", success ? @"YES" : @"NO", (unsigned long)[nsText length]);
+    return success;
+}
+
+- (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard {
+    if (!_widget) {
+        NSLog(@"[Coordinator] readSelectionFromPasteboard: NO (no widget)");
+        return NO;
+    }
+
+    NSString* nsText = [pboard stringForType:NSPasteboardTypeString];
+
+    if (!nsText || [nsText length] == 0) {
+        NSLog(@"[Coordinator] readSelectionFromPasteboard: NO (empty pasteboard)");
+        return NO;
+    }
+
+    std::string cppText = [nsText UTF8String];
+    _widget->replaceSelection(cppText);
+    [self setNeedsDisplay:YES];
+
+    NSLog(@"[Coordinator] readSelectionFromPasteboard: YES (%lu chars)", (unsigned long)[nsText length]);
+    return YES;
 }
 
 @end
