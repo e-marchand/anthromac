@@ -1,0 +1,90 @@
+# Core Data Science Libraries
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.10.0
+
+# Statistical Models
+statsmodels>=0.14.0
+pmdarima>=2.0.0  # Auto-ARIMA
+prophet>=1.1.0
+
+# Machine Learning
+scikit-learn>=1.3.0
+xgboost>=2.0.0
+lightgbm>=4.0.0
+
+# Deep Learning
+torch>=2.0.0
+pytorch-lightning>=2.0.0
+pytorch-forecasting>=1.0.0  # For Temporal Fusion Transformer
+
+# Time Series Specific
+sktime>=0.24.0
+tslearn>=0.6.0
+tbats>=1.1.0
+
+# Feature Engineering
+tsfresh>=0.20.0  # Automated feature extraction
+
+# Anomaly Detection
+pyod>=1.1.0  # Outlier detection
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.14.0
+
+# API and Serving
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+pydantic>=2.0.0
+python-multipart>=0.0.6
+
+# MLOps and Experiment Tracking
+mlflow>=2.7.0
+optuna>=3.3.0  # Hyperparameter optimization
+dvc>=3.0.0  # Data version control
+
+# Workflow Orchestration
+apache-airflow>=2.7.0  # Optional - comment out if not using
+# apache-airflow-providers-docker>=3.7.0
+
+# Data Validation
+great-expectations>=0.17.0
+pandera>=0.17.0
+
+# Utilities
+python-dotenv>=1.0.0
+pyyaml>=6.0
+joblib>=1.3.0
+tqdm>=4.65.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.0
+
+# Code Quality
+black>=23.7.0
+flake8>=6.0.0
+isort>=5.12.0
+mypy>=1.4.0
+pre-commit>=3.3.0
+
+# Documentation
+sphinx>=7.0.0
+sphinx-rtd-theme>=1.3.0
+
+# Production
+redis>=5.0.0  # For caching
+gunicorn>=21.2.0  # WSGI server
+python-json-logger>=2.0.7  # Structured logging
+
+# Monitoring
+prometheus-client>=0.17.0
+evidently>=0.4.0  # Data drift monitoring
+
+# Notebook Support
+jupyter>=1.0.0
+jupyterlab>=4.0.0
+ipywidgets>=8.0.0

@@ -1,0 +1,204 @@
+# Model-Specific Hyperparameters
+
+# SARIMA
+sarima:
+  order: [1, 1, 1]  # (p, d, q)
+  seasonal_order: [1, 1, 1, 12]  # (P, D, Q, s)
+  auto_arima:
+    enabled: true
+    max_p: 5
+    max_d: 2
+    max_q: 5
+    max_P: 2
+    max_D: 1
+    max_Q: 2
+    seasonal: true
+    stepwise: true
+    suppress_warnings: true
+    information_criterion: "aic"  # aic, bic, hqic
+
+# Prophet
+prophet:
+  growth: "linear"  # linear or logistic
+  changepoint_prior_scale: 0.05
+  seasonality_prior_scale: 10.0
+  holidays_prior_scale: 10.0
+  seasonality_mode: "multiplicative"  # additive or multiplicative
+  yearly_seasonality: "auto"
+  weekly_seasonality: "auto"
+  daily_seasonality: "auto"
+  mcmc_samples: 0
+  interval_width: 0.95
+  uncertainty_samples: 1000
+
+# Theta Method
+theta:
+  theta: 2  # Theta parameter (2 is classical method)
+  period: null  # Seasonal period (auto-detect if null)
+  deseasonalize: true
+
+# TBATS
+tbats:
+  use_box_cox: true
+  use_trend: true
+  use_damped_trend: true
+  seasonal_periods: [7, 365.25]
+  use_arma_errors: true
+  n_jobs: -1
+
+# XGBoost
+xgboost:
+  n_estimators: 100
+  max_depth: 6
+  learning_rate: 0.1
+  subsample: 0.8
+  colsample_bytree: 0.8
+  gamma: 0
+  reg_alpha: 0
+  reg_lambda: 1
+  objective: "reg:squarederror"
+  eval_metric: "rmse"
+  early_stopping_rounds: 10
+  random_state: 42
+
+# LightGBM
+lightgbm:
+  n_estimators: 100
+  max_depth: -1
+  learning_rate: 0.1
+  num_leaves: 31
+  subsample: 0.8
+  colsample_bytree: 0.8
+  reg_alpha: 0
+  reg_lambda: 0
+  objective: "regression"
+  metric: "rmse"
+  early_stopping_rounds: 10
+  random_state: 42
+  verbose: -1
+
+# LSTM
+lstm:
+  hidden_size: 128
+  num_layers: 2
+  dropout: 0.2
+  bidirectional: false
+
+  # Training
+  batch_size: 32
+  learning_rate: 0.001
+  max_epochs: 100
+  optimizer: "adam"
+  weight_decay: 0.0001
+  gradient_clip_val: 1.0
+
+  # Sequence
+  input_sequence_length: 30
+  output_sequence_length: 1
+
+  # Scheduler
+  lr_scheduler:
+    enabled: true
+    factor: 0.5
+    patience: 5
+    min_lr: 0.00001
+
+# GRU
+gru:
+  hidden_size: 128
+  num_layers: 2
+  dropout: 0.2
+  bidirectional: false
+
+  # Training
+  batch_size: 32
+  learning_rate: 0.001
+  max_epochs: 100
+  optimizer: "adam"
+  weight_decay: 0.0001
+  gradient_clip_val: 1.0
+
+  # Sequence
+  input_sequence_length: 30
+  output_sequence_length: 1
+
+  # Scheduler
+  lr_scheduler:
+    enabled: true
+    factor: 0.5
+    patience: 5
+    min_lr: 0.00001
+
+# Temporal Fusion Transformer (TFT)
+tft:
+  hidden_size: 128
+  lstm_layers: 2
+  attention_head_size: 4
+  dropout: 0.1
+  hidden_continuous_size: 16
+
+  # Training
+  batch_size: 128
+  learning_rate: 0.001
+  max_epochs: 50
+  optimizer: "ranger"  # adam, ranger, sgd
+  gradient_clip_val: 0.1
+  reduce_on_plateau_patience: 4
+
+  # Sequence
+  max_encoder_length: 60
+  max_prediction_length: 30
+
+  # Loss
+  loss: "QuantileLoss"  # MAE, RMSE, MAPE, QuantileLoss
+  quantiles: [0.1, 0.5, 0.9]
+
+  # Learning rate finder
+  auto_lr_find: true
+
+# Ensemble Parameters
+ensemble:
+  # Weighted average
+  weighted_average:
+    optimization_metric: "rmse"
+    min_weight: 0.0
+    max_weight: 1.0
+
+  # Stacking
+  stacking:
+    meta_learner: "ridge"  # ridge, lasso, elasticnet, rf, xgboost
+    cv_folds: 5
+    use_features: false
+
+  # Voting
+  voting:
+    weights: null  # null for equal weights
+
+# Conformal Prediction
+conformal:
+  method: "naive"  # naive, cv+, jackknife+
+  calibration_size: 0.2
+  alpha: 0.05  # 1 - confidence_level
+
+# Anomaly Detection Parameters
+anomaly_models:
+  isolation_forest:
+    n_estimators: 100
+    max_samples: "auto"
+    contamination: 0.1
+    max_features: 1.0
+    random_state: 42
+
+  local_outlier_factor:
+    n_neighbors: 20
+    contamination: 0.1
+    metric: "minkowski"
+
+  autoencoder:
+    encoding_dim: 32
+    hidden_layers: [64, 32]
+    activation: "relu"
+    batch_size: 32
+    epochs: 100
+    learning_rate: 0.001
+    reconstruction_error_threshold: 0.9
