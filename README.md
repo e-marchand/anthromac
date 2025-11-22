@@ -1,11 +1,11 @@
-# AnthroMac - C++ Performance Libraries
+# AnthroMac - C++ Libraries
 
-A collection of high-performance C++20 header-only libraries for modern applications.
+A collection of C++20 header-only libraries for modern applications.
 
 ## Projects
 
-### 1. [ThreadPool](ThreadPool/) - High-Performance Task Scheduler
-A header-only C++20 thread pool implementation with work-stealing capabilities.
+### 1. [ThreadPool](ThreadPool/) - Task Scheduler
+Thread pool implementation with work-stealing capabilities.
 
 **Features:**
 - Lock-free work queue using std::atomic
@@ -16,16 +16,15 @@ A header-only C++20 thread pool implementation with work-stealing capabilities.
 - Dynamic thread scaling based on workload
 
 ### 2. [MemoryArena](MemoryArena/) - Custom Memory Management
-High-performance memory allocators optimized for different use cases.
+Memory allocators for different use cases.
 
 **Features:**
 - Arena Allocator: Linear allocation with bulk deallocation
 - Pool Allocator: Fixed-size object pooling with O(1) alloc/free
 - Stack Allocator: LIFO allocation pattern
 - Ring Buffer Allocator: Circular memory management
-- Up to 10x faster than standard malloc/free
 
-### 3. [EventBus](EventBus/) - Modern Event System
+### 3. [EventBus](EventBus/) - Event System
 Compile-time type-safe event bus for decoupled component communication.
 
 **Features:**
@@ -36,7 +35,7 @@ Compile-time type-safe event bus for decoupled component communication.
 - Event filtering and transformation
 - Weak subscription support to prevent memory leaks
 
-### 4. [LockFreeQueue](LockFreeQueue/) - High-Concurrency MPMC Queue
+### 4. [LockFreeQueue](LockFreeQueue/) - Lock-Free MPMC Queue
 Multi-producer multi-consumer lock-free queue using C++20 atomic operations.
 
 **Features:**
@@ -45,13 +44,12 @@ Multi-producer multi-consumer lock-free queue using C++20 atomic operations.
 - Memory ordering optimization for different architectures
 - Support for bulk enqueue/dequeue operations
 - Wait-free progress guarantee for SPSC variant
-- 50M+ ops/sec on modern x86_64 processors
 
-### 5. [JsonParser](JsonParser/) - High-Performance JSON Processing
-Modern JSON parser with DOM and SAX interfaces, optimized for speed.
+### 5. [JsonParser](JsonParser/) - JSON Parser
+JSON parser with DOM and SAX interfaces.
 
 **Features:**
-- Fast parsing with optimized algorithms
+- JSON parsing with SIMD acceleration
 - Zero-copy string views where possible
 - DOM and SAX-style parsing interfaces
 - JSON Pointer support (RFC 6901)
@@ -80,22 +78,22 @@ C++ reflection using template metaprogramming and macros.
 - Visitor pattern support
 - No external dependencies
 
-### 8. [ExpressionEvaluator](ExpressionEvaluator/) - Runtime Expression JIT
-Mathematical expression evaluator with JIT compilation to optimized bytecode.
+### 8. [ExpressionEvaluator](ExpressionEvaluator/) - Runtime Expression Evaluator
+Mathematical expression evaluator with JIT compilation.
 
 **Features:**
 - Parse and evaluate mathematical expressions at runtime
-- JIT compilation for repeated evaluations (100x speedup)
+- JIT compilation for repeated evaluations
 - Support for variables and user-defined functions
 - Expression optimization and simplification
 - Automatic constant folding
 - Common subexpression elimination
 
 ### 9. [DatabaseEngine](DatabaseEngine/) - Embedded LSM-Tree Storage
-Lightweight embedded database engine implementing Log-Structured Merge-Tree architecture.
+Embedded database engine implementing Log-Structured Merge-Tree architecture.
 
 **Features:**
-- LSM-Tree architecture with efficient writes and reads
+- LSM-Tree architecture for writes and reads
 - Write-ahead logging (WAL) for durability and crash recovery
 - In-memory MemTable with fast lookups
 - SSTable format with bloom filters
