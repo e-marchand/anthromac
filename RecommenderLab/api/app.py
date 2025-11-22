@@ -6,6 +6,15 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import logging
 from datetime import datetime
+import sys
+from pathlib import Path
+import pandas as pd
+import numpy as np
+
+# Add src to path
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from models.recommender import RecommenderSystem
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -27,8 +36,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Global recommender instance
+recommender: Optional[RecommenderSystem] = None
+
 
 # Request/Response Models
+class TrainRequest(BaseModel):
+    """Request schema for training."""
+    interactions: List[Dict[str, Any]] = Field(..., description="User-item interactions")
+    model_type: str = Field(default="ncf", description="Model type (als, ncf)")
+    config: Optional[Dict[str, Any]] = Field(default=None, description="Model configuration")
+
+
+
 class RecommendationRequest(BaseModel):
     """Request schema for recommendations."""
     user_id: int = Field(..., description="User ID")
@@ -78,6 +98,58 @@ async def root():
     }
 
 
+@app.post("/train")
+async def train_model(request: TrainRequest):
+    """
+    Train a recommendation model.
+
+    Args:
+        request: Training request with interactions and config
+
+    Returns:
+        Training status
+    """
+    global recommender
+
+    try:
+        logger.info(f"Training {request.model_type} model with {len(request.interactions)} interactions")
+
+        # Convert interactions to DataFrame
+        interactions_df = pd.DataFrame(request.interactions)
+
+        # Validate required columns
+        required_cols = ['user_id', 'item_id', 'rating']
+        if not all(col in interactions_df.columns for col in required_cols):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Interactions must contain columns: {required_cols}"
+            )
+
+        # Initialize recommender
+        recommender = RecommenderSystem(
+            model_type=request.model_type,
+            config=request.config or {}
+        )
+
+        # Train the model
+        recommender.fit(interactions_df)
+
+        return {
+            "status": "success",
+            "message": f"Successfully trained {request.model_type} model",
+            "model_type": request.model_type,
+            "num_interactions": len(interactions_df),
+            "num_users": interactions_df['user_id'].nunique(),
+            "num_items": interactions_df['item_id'].nunique()
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Training error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
@@ -98,32 +170,52 @@ async def recommend(request: RecommendationRequest):
     Returns:
         List of recommended items with scores
     """
+    global recommender
+
     try:
         logger.info(f"Recommendation request for user {request.user_id}")
 
-        # TODO: Implement actual recommendation logic
-        # This is a placeholder
+        if recommender is None:
+            raise HTTPException(
+                status_code=400,
+                detail="No trained model available. Please train a model first using /train endpoint."
+            )
+
+        # Get recommendations from model
+        start_time = datetime.utcnow()
+        recs = recommender.recommend(
+            user_id=request.user_id,
+            n=request.n,
+            filter_seen=request.filter_seen,
+            diversity=request.diversity,
+            context=request.context
+        )
+        latency = (datetime.utcnow() - start_time).total_seconds() * 1000
+
+        # Format recommendations
         recommendations = [
             RecommendationItem(
-                item_id=i,
-                score=0.9 - (i * 0.05),
-                title=f"Item {i}",
-                category="placeholder",
-                explanation="Based on your preferences"
+                item_id=rec['item_id'],
+                score=rec['score'],
+                title=f"Item {rec['item_id']}",
+                explanation=f"Recommended based on score: {rec['score']:.3f}"
             )
-            for i in range(1, min(request.n + 1, 11))
+            for rec in recs
         ]
 
         return RecommendationResponse(
             user_id=request.user_id,
             recommendations=recommendations,
             metadata={
-                "model_version": "placeholder_v1",
+                "model_type": recommender.model_type,
                 "timestamp": datetime.utcnow().isoformat(),
-                "latency_ms": 50
+                "latency_ms": latency,
+                "num_recommendations": len(recommendations)
             }
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Recommendation error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -140,24 +232,41 @@ async def similar_items(request: SimilarItemsRequest):
     Returns:
         List of similar items
     """
+    global recommender
+
     try:
         logger.info(f"Similar items request for item {request.item_id}")
 
-        # TODO: Implement similar items logic
-        similar = [
+        if recommender is None:
+            raise HTTPException(
+                status_code=400,
+                detail="No trained model available. Please train a model first."
+            )
+
+        # Get similar items from model
+        similar = recommender.similar_items(
+            item_id=request.item_id,
+            n=request.n
+        )
+
+        # Format response
+        formatted_similar = [
             {
-                "item_id": i,
-                "similarity": 0.95 - (i * 0.05),
-                "title": f"Similar Item {i}"
+                "item_id": item['item_id'],
+                "similarity": item['similarity'],
+                "title": f"Item {item['item_id']}"
             }
-            for i in range(1, min(request.n + 1, 11))
+            for item in similar
         ]
 
         return {
             "item_id": request.item_id,
-            "similar_items": similar
+            "similar_items": formatted_similar,
+            "model_type": recommender.model_type
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Similar items error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
