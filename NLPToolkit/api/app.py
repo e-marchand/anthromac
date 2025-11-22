@@ -6,10 +6,20 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import logging
 from datetime import datetime
+import sys
+from pathlib import Path
+
+# Add src to path
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from pipeline import NLPPipeline
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Global pipeline instance
+nlp_pipeline: Optional[NLPPipeline] = None
 
 # Create FastAPI app
 app = FastAPI(
@@ -118,55 +128,49 @@ async def analyze_text(request: AnalyzeRequest):
     Returns:
         Analysis results
     """
+    global nlp_pipeline
+
     try:
         logger.info(f"Analysis request: {len(request.text)} chars, tasks={request.tasks}")
 
+        # Initialize pipeline if needed
+        if nlp_pipeline is None:
+            nlp_pipeline = NLPPipeline(
+                tasks=request.tasks,
+                language=request.language
+            )
+
+        # Process text
+        results = nlp_pipeline.process(
+            text=request.text,
+            language=request.language if request.language != 'auto' else None
+        )
+
+        # Build response
         response = AnalyzeResponse(
             text=request.text,
             metadata={
                 "tasks_performed": request.tasks,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
+                "text_length": len(request.text)
             }
         )
 
-        # Language detection
-        if "language" in request.tasks:
-            # TODO: Implement actual language detection
-            response.language = {
-                "language": "en",
-                "confidence": 0.99,
-                "iso_code": "en-US"
-            }
+        # Add results
+        if "language" in request.tasks or "language_detection" in request.tasks:
+            response.language = results.get('language')
 
-        # Named Entity Recognition
         if "ner" in request.tasks:
-            # TODO: Implement actual NER
+            entities_data = results.get('entities', [])
             response.entities = [
-                Entity(
-                    text="example",
-                    type="MISC",
-                    start=0,
-                    end=7,
-                    confidence=0.95
-                )
+                Entity(**ent) for ent in entities_data
             ]
 
-        # Sentiment Analysis
         if "sentiment" in request.tasks:
-            # TODO: Implement actual sentiment analysis
-            response.sentiment = {
-                "label": "positive",
-                "score": 0.85,
-                "confidence": 0.92
-            }
+            response.sentiment = results.get('sentiment')
 
-        # Topic extraction
         if "topics" in request.tasks:
-            # TODO: Implement actual topic extraction
-            response.topics = [
-                {"topic": "technology", "score": 0.75},
-                {"topic": "business", "score": 0.65}
-            ]
+            response.topics = results.get('topics')
 
         return response
 

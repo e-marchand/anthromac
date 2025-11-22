@@ -2,6 +2,14 @@
 
 from typing import List, Dict, Any, Optional, Union
 import logging
+from pathlib import Path
+import sys
+
+# Add models to path
+sys.path.insert(0, str(Path(__file__).parent))
+
+from models.sentiment.analyzer import SentimentAnalyzer
+from models.ner.extractor import NERExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -70,9 +78,18 @@ class NLPPipeline:
 
         logger.info(f"Loading model for task: {task}")
 
-        # TODO: Implement actual model loading
-        # For now, return placeholder
-        model = None
+        # Load actual models based on task
+        if task == 'sentiment':
+            model = SentimentAnalyzer(
+                model_name=self.config.get('sentiment_model', 'distilbert-base-uncased-finetuned-sst-2-english')
+            )
+        elif task == 'ner':
+            model = NERExtractor(
+                model_name=self.config.get('ner_model', 'dslim/bert-base-NER'),
+                language=self.language if self.language != 'auto' else 'en'
+            )
+        else:
+            model = None
 
         self.models[task] = model
         return model
@@ -189,16 +206,16 @@ class NLPPipeline:
         Returns:
             List of entities
         """
-        # TODO: Implement actual NER
-        return [
-            {
-                'text': 'example',
-                'type': 'MISC',
-                'start': 0,
-                'end': 7,
-                'confidence': 0.95
-            }
-        ]
+        model = self._load_model('ner')
+        if model is None:
+            return []
+
+        try:
+            entities = model.extract(text)
+            return entities
+        except Exception as e:
+            logger.error(f"Entity extraction error: {e}")
+            return []
 
     def _analyze_sentiment(
         self,
@@ -215,12 +232,16 @@ class NLPPipeline:
         Returns:
             Sentiment analysis result
         """
-        # TODO: Implement actual sentiment analysis
-        return {
-            'label': 'positive',
-            'score': 0.85,
-            'confidence': 0.92
-        }
+        model = self._load_model('sentiment')
+        if model is None:
+            return {'label': 'neutral', 'confidence': 0.5, 'scores': {}}
+
+        try:
+            result = model.analyze(text)
+            return result
+        except Exception as e:
+            logger.error(f"Sentiment analysis error: {e}")
+            return {'label': 'neutral', 'confidence': 0.5, 'scores': {}}
 
     def _extract_topics(self, text: str) -> List[Dict[str, Any]]:
         """
