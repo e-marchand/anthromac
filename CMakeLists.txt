@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.15)
+project(AnthroMac VERSION 1.0.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Add subdirectories
+add_subdirectory(ThreadPool)
+add_subdirectory(MemoryArena)
+
+# Enable testing
+enable_testing()
+
+message(STATUS "AnthroMac C++ Projects configured successfully")
+message(STATUS "  - ThreadPool: High-Performance Task Scheduler")
+message(STATUS "  - MemoryArena: Custom Memory Management")
