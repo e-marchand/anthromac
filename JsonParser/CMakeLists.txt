@@ -23,10 +23,32 @@ else()
     target_compile_options(jsonparser_example PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+# SIMD support options
+option(JSONPARSER_ENABLE_SIMD "Enable SIMD optimizations" ON)
+option(JSONPARSER_ENABLE_AVX2 "Enable AVX2 instructions (if available)" OFF)
+
+if(JSONPARSER_ENABLE_SIMD)
+    if(NOT MSVC)
+        if(JSONPARSER_ENABLE_AVX2)
+            message(STATUS "JsonParser: Enabling AVX2 SIMD optimizations")
+            target_compile_options(jsonparser_example PRIVATE -mavx2)
+        else()
+            message(STATUS "JsonParser: Enabling SSE4.2 SIMD optimizations")
+            target_compile_options(jsonparser_example PRIVATE -msse4.2)
+        endif()
+    else()
+        if(JSONPARSER_ENABLE_AVX2)
+            target_compile_options(jsonparser_example PRIVATE /arch:AVX2)
+        endif()
+    endif()
+else()
+    message(STATUS "JsonParser: SIMD optimizations disabled")
+endif()
+
 # Optimization flags for release builds
 if(NOT MSVC)
     target_compile_options(jsonparser_example PRIVATE
-        $<$<CONFIG:RELEASE>:-O3 -march=native>
+        $<$<CONFIG:RELEASE>:-O3>
     )
 endif()
 

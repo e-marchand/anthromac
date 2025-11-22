@@ -10,6 +10,170 @@
 #include <sstream>
 #include <charconv>
 #include <cctype>
+#include <cstring>
+
+// SIMD support detection
+#if defined(__SSE4_2__) || defined(__AVX2__)
+    #define JSON_SIMD_ENABLED 1
+    #include <immintrin.h>
+    #ifdef __AVX2__
+        #define JSON_AVX2_ENABLED 1
+    #endif
+#else
+    #define JSON_SIMD_ENABLED 0
+#endif
+
+namespace json {
+
+// SIMD-accelerated helper functions
+namespace simd {
+
+#if JSON_SIMD_ENABLED
+
+// Fast whitespace skipping using SIMD
+inline size_t skip_whitespace_simd(const char* data, size_t pos, size_t size) {
+    const char* ptr = data + pos;
+    const char* end = data + size;
+
+#ifdef JSON_AVX2_ENABLED
+    // AVX2: Process 32 bytes at a time
+    __m256i ws = _mm256_set1_epi8(' ');
+    __m256i tab = _mm256_set1_epi8('\t');
+    __m256i nl = _mm256_set1_epi8('\n');
+    __m256i cr = _mm256_set1_epi8('\r');
+
+    while (ptr + 32 <= end) {
+        __m256i chunk = _mm256_loadu_si256((__m256i*)ptr);
+        __m256i is_ws = _mm256_or_si256(
+            _mm256_or_si256(_mm256_cmpeq_epi8(chunk, ws), _mm256_cmpeq_epi8(chunk, tab)),
+            _mm256_or_si256(_mm256_cmpeq_epi8(chunk, nl), _mm256_cmpeq_epi8(chunk, cr))
+        );
+
+        int mask = _mm256_movemask_epi8(is_ws);
+        if (mask != -1) {
+            // Not all whitespace, count trailing ones
+            int count = __builtin_ctz(~mask);
+            return (ptr - data) + count;
+        }
+        ptr += 32;
+    }
+#else
+    // SSE4.2: Process 16 bytes at a time
+    __m128i ws = _mm_set1_epi8(' ');
+    __m128i tab = _mm_set1_epi8('\t');
+    __m128i nl = _mm_set1_epi8('\n');
+    __m128i cr = _mm_set1_epi8('\r');
+
+    while (ptr + 16 <= end) {
+        __m128i chunk = _mm_loadu_si128((__m128i*)ptr);
+        __m128i is_ws = _mm_or_si128(
+            _mm_or_si128(_mm_cmpeq_epi8(chunk, ws), _mm_cmpeq_epi8(chunk, tab)),
+            _mm_or_si128(_mm_cmpeq_epi8(chunk, nl), _mm_cmpeq_epi8(chunk, cr))
+        );
+
+        int mask = _mm_movemask_epi8(is_ws);
+        if (mask != 0xFFFF) {
+            int count = __builtin_ctz(~mask);
+            return (ptr - data) + count;
+        }
+        ptr += 16;
+    }
+#endif
+
+    // Fallback for remaining bytes
+    while (ptr < end && (*ptr == ' ' || *ptr == '\t' || *ptr == '\n' || *ptr == '\r')) {
+        ++ptr;
+    }
+
+    return ptr - data;
+}
+
+// Fast quote finding using SIMD
+inline size_t find_quote_simd(const char* data, size_t pos, size_t size) {
+    const char* ptr = data + pos;
+    const char* end = data + size;
+
+#ifdef JSON_AVX2_ENABLED
+    __m256i quote = _mm256_set1_epi8('"');
+    __m256i backslash = _mm256_set1_epi8('\\');
+
+    while (ptr + 32 <= end) {
+        __m256i chunk = _mm256_loadu_si256((__m256i*)ptr);
+        __m256i is_quote = _mm256_cmpeq_epi8(chunk, quote);
+        __m256i is_backslash = _mm256_cmpeq_epi8(chunk, backslash);
+
+        int quote_mask = _mm256_movemask_epi8(is_quote);
+        int backslash_mask = _mm256_movemask_epi8(is_backslash);
+
+        if (quote_mask != 0) {
+            int count = __builtin_ctz(quote_mask);
+            return (ptr - data) + count;
+        }
+
+        if (backslash_mask != 0) {
+            // Has escape, use scalar fallback
+            break;
+        }
+
+        ptr += 32;
+    }
+#else
+    __m128i quote = _mm_set1_epi8('"');
+
+    while (ptr + 16 <= end) {
+        __m128i chunk = _mm_loadu_si128((__m128i*)ptr);
+        __m128i is_quote = _mm_cmpeq_epi8(chunk, quote);
+
+        int mask = _mm_movemask_epi8(is_quote);
+        if (mask != 0) {
+            int count = __builtin_ctz(mask);
+            return (ptr - data) + count;
+        }
+
+        ptr += 16;
+    }
+#endif
+
+    // Scalar fallback
+    while (ptr < end) {
+        if (*ptr == '"') return ptr - data;
+        if (*ptr == '\\') {
+            // Skip escaped character
+            if (ptr + 1 < end) ptr += 2;
+            else break;
+        } else {
+            ++ptr;
+        }
+    }
+
+    return size; // Not found
+}
+
+#endif // JSON_SIMD_ENABLED
+
+// Fallback scalar implementations
+inline size_t skip_whitespace_scalar(const char* data, size_t pos, size_t size) {
+    while (pos < size && (data[pos] == ' ' || data[pos] == '\t' ||
+                          data[pos] == '\n' || data[pos] == '\r')) {
+        ++pos;
+    }
+    return pos;
+}
+
+inline size_t find_quote_scalar(const char* data, size_t pos, size_t size) {
+    while (pos < size) {
+        if (data[pos] == '"') return pos;
+        if (data[pos] == '\\') {
+            if (pos + 1 < size) pos += 2;
+            else break;
+        } else {
+            ++pos;
+        }
+    }
+    return size;
+}
+
+} // namespace simd
 
 namespace json {
 
@@ -188,9 +352,11 @@ private:
     size_t pos_;
 
     void skip_whitespace() {
-        while (pos_ < json_.size() && std::isspace(json_[pos_])) {
-            ++pos_;
-        }
+#if JSON_SIMD_ENABLED
+        pos_ = simd::skip_whitespace_simd(json_.data(), pos_, json_.size());
+#else
+        pos_ = simd::skip_whitespace_scalar(json_.data(), pos_, json_.size());
+#endif
     }
 
     char peek() const {
@@ -431,9 +597,11 @@ private:
     size_t pos_;
 
     void skip_whitespace() {
-        while (pos_ < json_.size() && std::isspace(json_[pos_])) {
-            ++pos_;
-        }
+#if JSON_SIMD_ENABLED
+        pos_ = simd::skip_whitespace_simd(json_.data(), pos_, json_.size());
+#else
+        pos_ = simd::skip_whitespace_scalar(json_.data(), pos_, json_.size());
+#endif
     }
 
     char peek() const {

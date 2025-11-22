@@ -15,6 +15,31 @@ A modern JSON parser leveraging SIMD instructions (SSE4.2/AVX2) for blazing-fast
 - 3x faster than standard parsers for large files
 - Minimal memory overhead with arena allocation
 
+## SIMD Acceleration
+
+The parser automatically detects and uses SIMD instructions when available:
+
+**SSE4.2 Support:**
+- Processes 16 bytes at a time for whitespace skipping
+- Fast quote and escape character detection
+- Automatic fallback on older CPUs
+
+**AVX2 Support:**
+- Processes 32 bytes at a time (2x throughput)
+- Parallel character comparison
+- Optimized for modern Intel/AMD CPUs
+
+**Compiler Flags:**
+```bash
+# Enable SSE4.2
+g++ -msse4.2 example.cpp
+
+# Enable AVX2 (recommended for best performance)
+g++ -mavx2 example.cpp
+```
+
+The implementation automatically falls back to scalar code when SIMD is not available, ensuring compatibility across all platforms.
+
 ## Usage
 
 ### Basic DOM Parsing
