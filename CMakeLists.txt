@@ -10,6 +10,7 @@ add_subdirectory(ThreadPool)
 add_subdirectory(MemoryArena)
 add_subdirectory(EventBus)
 add_subdirectory(LockFreeQueue)
+add_subdirectory(JsonParser)
 
 # Enable testing
 enable_testing()
@@ -19,3 +20,4 @@ message(STATUS "  - ThreadPool: High-Performance Task Scheduler")
 message(STATUS "  - MemoryArena: Custom Memory Management")
 message(STATUS "  - EventBus: Modern Event System")
 message(STATUS "  - LockFreeQueue: Lock-Free MPMC Queue")
+message(STATUS "  - JsonParser: High-Performance JSON Processing")

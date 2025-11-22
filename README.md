@@ -47,6 +47,17 @@ Multi-producer multi-consumer lock-free queue using C++20 atomic operations.
 - Wait-free progress guarantee for SPSC variant
 - 50M+ ops/sec on modern x86_64 processors
 
+### 5. [JsonParser](JsonParser/) - High-Performance JSON Processing
+Modern JSON parser with DOM and SAX interfaces, optimized for speed.
+
+**Features:**
+- Fast parsing with optimized algorithms
+- Zero-copy string views where possible
+- DOM and SAX-style parsing interfaces
+- JSON Pointer support (RFC 6901)
+- Pretty printing with configurable indentation
+- Comprehensive error reporting
+
 ## Building
 
 ```bash
@@ -69,6 +80,9 @@ cmake --build .
 
 # LockFreeQueue example
 ./build/LockFreeQueue/lockfreequeue_example
+
+# JsonParser example
+./build/JsonParser/jsonparser_example
 ```
 
 ## Requirements
