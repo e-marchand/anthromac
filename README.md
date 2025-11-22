@@ -91,6 +91,17 @@ Mathematical expression evaluator with JIT compilation to optimized bytecode.
 - Automatic constant folding
 - Common subexpression elimination
 
+### 9. [DatabaseEngine](DatabaseEngine/) - Embedded LSM-Tree Storage
+Lightweight embedded database engine implementing Log-Structured Merge-Tree architecture.
+
+**Features:**
+- LSM-Tree architecture with efficient writes and reads
+- Write-ahead logging (WAL) for durability and crash recovery
+- In-memory MemTable with fast lookups
+- SSTable format with bloom filters
+- Multi-level compaction for space efficiency
+- Iterator support for range scans
+
 ## Building
 
 ```bash
@@ -125,6 +136,9 @@ cmake --build .
 
 # ExpressionEvaluator example
 ./build/ExpressionEvaluator/expression_example
+
+# DatabaseEngine example
+./build/DatabaseEngine/db_example
 ```
 
 ## Requirements

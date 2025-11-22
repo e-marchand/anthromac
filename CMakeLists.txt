@@ -14,6 +14,7 @@ add_subdirectory(JsonParser)
 add_subdirectory(NetworkStack)
 add_subdirectory(Reflection)
 add_subdirectory(ExpressionEvaluator)
+add_subdirectory(DatabaseEngine)
 
 # Enable testing
 enable_testing()
@@ -27,3 +28,4 @@ message(STATUS "  - JsonParser: High-Performance JSON Processing")
 message(STATUS "  - NetworkStack: Async Networking Library")
 message(STATUS "  - Reflection: Compile-Time Reflection System")
 message(STATUS "  - ExpressionEvaluator: Runtime Expression JIT")
+message(STATUS "  - DatabaseEngine: Embedded LSM-Tree Storage")
