@@ -10,10 +10,20 @@ from datetime import datetime
 import io
 from PIL import Image
 import numpy as np
+import sys
+from pathlib import Path
+
+# Add src to path
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from models.detection.yolov8 import YOLOv8Detector
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Global detector instance
+detector: Optional[YOLOv8Detector] = None
 
 # Create FastAPI app
 app = FastAPI(
@@ -107,30 +117,61 @@ async def detect_objects(
     Returns:
         Detection results with bounding boxes
     """
+    global detector
+
     try:
+        # Initialize detector if needed
+        if detector is None:
+            detector = YOLOv8Detector(
+                model='yolov8m',
+                conf_threshold=conf_threshold,
+                iou_threshold=iou_threshold
+            )
+
         # Read image
         contents = await file.read()
         image = Image.open(io.BytesIO(contents))
         logger.info(f"Received image: {image.size}, format: {image.format}")
 
-        # TODO: Implement actual detection
-        # For now, return placeholder
+        # Convert to numpy array
+        img_array = np.array(image)
+
+        # Run detection
+        import time
+        start_time = time.time()
+
+        detections_data = detector.predict(
+            img_array,
+            conf_threshold=conf_threshold,
+            iou_threshold=iou_threshold
+        )
+
+        inference_time = (time.time() - start_time) * 1000
+
+        # Format detections
         detections = [
             Detection(
-                class_name="person",
-                confidence=0.95,
-                bbox=BoundingBox(x1=100, y1=150, x2=300, y2=450)
+                class_name=det['class_name'],
+                confidence=det['confidence'],
+                bbox=BoundingBox(
+                    x1=det['bbox'][0],
+                    y1=det['bbox'][1],
+                    x2=det['bbox'][2],
+                    y2=det['bbox'][3]
+                )
             )
+            for det in detections_data
         ]
 
         response = DetectionResponse(
             detections=detections,
-            inference_time_ms=25.5,
+            inference_time_ms=inference_time,
             image_shape=[image.height, image.width, 3],
             metadata={
                 "model": "yolov8m",
                 "conf_threshold": conf_threshold,
-                "iou_threshold": iou_threshold
+                "iou_threshold": iou_threshold,
+                "num_detections": len(detections)
             }
         )
 

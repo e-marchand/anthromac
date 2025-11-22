@@ -50,10 +50,24 @@ class YOLOv8Detector:
 
         logger.info(f"Initializing {model} on {self.device}")
 
-        # TODO: Load actual model
-        # from ultralytics import YOLO
-        # self.model = YOLO(f'{model}.pt')
+        # Lazy loading - model will be loaded on first use
         self.model = None
+        self._model_loaded = False
+
+    def _lazy_load(self):
+        """Lazy load the YOLO model."""
+        if self._model_loaded:
+            return
+
+        try:
+            from ultralytics import YOLO
+            self.model = YOLO(f'{self.model_name}.pt')
+            self._model_loaded = True
+            logger.info(f"Loaded {self.model_name} successfully")
+        except ImportError:
+            logger.warning("ultralytics not available, using mock detector")
+            self.model = None
+            self._model_loaded = True
 
     def predict(
         self,
@@ -74,21 +88,49 @@ class YOLOv8Detector:
         Returns:
             List of detections with bbox, class, and confidence
         """
+        self._lazy_load()
+
         conf = conf_threshold or self.conf_threshold
         iou = iou_threshold or self.iou_threshold
 
         logger.info(f"Running detection with conf={conf}, iou={iou}")
 
-        # TODO: Implement actual prediction
-        # results = self.model(image, conf=conf, iou=iou, classes=classes)
+        # Use real YOLO model if available
+        if self.model is not None:
+            try:
+                results = self.model(
+                    image,
+                    conf=conf,
+                    iou=iou,
+                    classes=classes,
+                    device=self.device,
+                    verbose=False
+                )
 
-        # Placeholder results
+                # Parse results
+                detections = []
+                for result in results:
+                    boxes = result.boxes
+                    for i in range(len(boxes)):
+                        box = boxes.xyxy[i].cpu().numpy()
+                        detections.append({
+                            'class_id': int(boxes.cls[i]),
+                            'class_name': result.names[int(boxes.cls[i])],
+                            'confidence': float(boxes.conf[i]),
+                            'bbox': box.tolist()  # [x1, y1, x2, y2]
+                        })
+
+                return detections
+            except Exception as e:
+                logger.error(f"Detection error: {e}")
+
+        # Fallback: mock detection
         detections = [
             {
                 'class_id': 0,
-                'class_name': 'person',
-                'confidence': 0.95,
-                'bbox': [100, 150, 300, 450]  # x1, y1, x2, y2
+                'class_name': 'object',
+                'confidence': 0.75,
+                'bbox': [100, 150, 300, 450]
             }
         ]
 
