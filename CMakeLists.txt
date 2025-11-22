@@ -13,6 +13,7 @@ add_subdirectory(LockFreeQueue)
 add_subdirectory(JsonParser)
 add_subdirectory(NetworkStack)
 add_subdirectory(Reflection)
+add_subdirectory(ExpressionEvaluator)
 
 # Enable testing
 enable_testing()
@@ -25,3 +26,4 @@ message(STATUS "  - LockFreeQueue: Lock-Free MPMC Queue")
 message(STATUS "  - JsonParser: High-Performance JSON Processing")
 message(STATUS "  - NetworkStack: Async Networking Library")
 message(STATUS "  - Reflection: Compile-Time Reflection System")
+message(STATUS "  - ExpressionEvaluator: Runtime Expression JIT")

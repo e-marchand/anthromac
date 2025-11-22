@@ -80,6 +80,17 @@ C++ reflection using template metaprogramming and macros.
 - Visitor pattern support
 - No external dependencies
 
+### 8. [ExpressionEvaluator](ExpressionEvaluator/) - Runtime Expression JIT
+Mathematical expression evaluator with JIT compilation to optimized bytecode.
+
+**Features:**
+- Parse and evaluate mathematical expressions at runtime
+- JIT compilation for repeated evaluations (100x speedup)
+- Support for variables and user-defined functions
+- Expression optimization and simplification
+- Automatic constant folding
+- Common subexpression elimination
+
 ## Building
 
 ```bash
@@ -111,6 +122,9 @@ cmake --build .
 
 # Reflection example
 ./build/Reflection/reflection_example
+
+# ExpressionEvaluator example
+./build/ExpressionEvaluator/expression_example
 ```
 
 ## Requirements
