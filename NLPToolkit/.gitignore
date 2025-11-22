@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints
+
+# Data
+data/raw/*
+data/processed/*
+data/external/*
+data/corpora/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
+!data/corpora/.gitkeep
+
+# Models
+models/saved_models/*
+models/checkpoints/*
+!models/saved_models/.gitkeep
+!models/checkpoints/.gitkeep
+
+# Downloaded models
+*.bin
+*.pt
+*.pth
+*.onnx
+*.h5
+
+# Logs
+logs/
+*.log
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Cache
+.cache/
+*.cache
+.transformers_cache/
+
+# Secrets
+.env
+*.pem
+*.key
+
+# Temp
+tmp/
+temp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Spacy models (downloaded separately)
+*.spacy
+
+# FastText models
+*.ftz
+cc.*.bin
