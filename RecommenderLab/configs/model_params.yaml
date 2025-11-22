@@ -1,0 +1,243 @@
+# Model-Specific Hyperparameters for RecommenderLab
+
+# Popularity Baseline
+popularity:
+  method: "count"  # count, rating_avg, weighted
+  time_decay: false
+  half_life_days: 30
+
+# Alternating Least Squares (ALS)
+als:
+  factors: 100
+  regularization: 0.01
+  iterations: 15
+  alpha: 40  # Confidence scaling for implicit feedback
+  use_gpu: false
+  calculate_training_loss: true
+  random_state: 42
+
+# SVD++
+svdpp:
+  n_factors: 100
+  n_epochs: 20
+  lr_all: 0.005
+  reg_all: 0.02
+  random_state: 42
+  verbose: true
+
+# Neural Collaborative Filtering (NCF)
+ncf:
+  embedding_dim: 64
+  mlp_layers: [128, 64, 32, 16]
+  dropout: 0.2
+
+  # Training
+  batch_size: 256
+  learning_rate: 0.001
+  optimizer: "adam"
+  weight_decay: 0.00001
+  max_epochs: 50
+
+  # Loss
+  loss: "bce"  # bce, bpr
+  negative_sampling_ratio: 4
+
+  # Scheduler
+  lr_scheduler:
+    enabled: true
+    factor: 0.5
+    patience: 3
+
+# LightFM
+lightfm:
+  no_components: 64
+  learning_rate: 0.05
+  loss: "warp"  # warp, bpr, logistic
+  epochs: 30
+  num_threads: 4
+  user_alpha: 0.0001
+  item_alpha: 0.0001
+  max_sampled: 10
+  random_state: 42
+
+# Two-Tower Neural Network
+two_tower:
+  # Architecture
+  user_tower_layers: [256, 128, 64]
+  item_tower_layers: [256, 128, 64]
+  embedding_dim: 64
+  final_activation: "sigmoid"
+
+  # Training
+  batch_size: 512
+  learning_rate: 0.001
+  optimizer: "adam"
+  max_epochs: 30
+  warmup_epochs: 5
+
+  # Negative sampling
+  negative_sampling_ratio: 5
+  hard_negative_ratio: 0.2
+
+  # Temperature scaling for similarity
+  temperature: 0.07
+
+# GraphSAGE
+graphsage:
+  # Architecture
+  hidden_channels: [128, 64]
+  num_layers: 2
+  aggregator: "mean"  # mean, gcn, pool, lstm
+  dropout: 0.5
+
+  # Sampling
+  num_neighbors: [10, 5]  # Per layer
+  batch_size: 256
+
+  # Training
+  learning_rate: 0.01
+  weight_decay: 0.0005
+  max_epochs: 100
+
+# PinSage
+pinsage:
+  # Architecture
+  hidden_channels: 256
+  num_layers: 3
+  dropout: 0.5
+
+  # Random walk sampling
+  walk_length: 2
+  num_walks: 4
+  num_neighbors: 10
+
+  # Hard negative mining
+  hard_neg_prob: 0.8
+
+  # Training
+  batch_size: 512
+  learning_rate: 0.001
+  max_epochs: 50
+
+# Transformer4Rec
+transformer4rec:
+  # Architecture
+  d_model: 128
+  n_heads: 8
+  n_layers: 4
+  d_ff: 512
+  dropout: 0.1
+
+  # Sequence
+  max_seq_length: 50
+  mask_prob: 0.15  # For masked language modeling
+
+  # Training
+  batch_size: 128
+  learning_rate: 0.001
+  optimizer: "adam"
+  max_epochs: 30
+  warmup_steps: 1000
+
+  # Loss
+  loss: "cross_entropy"
+  label_smoothing: 0.1
+
+# GRU4Rec
+gru4rec:
+  # Architecture
+  hidden_size: 128
+  num_layers: 2
+  dropout: 0.2
+  embedding_dim: 64
+
+  # Training
+  batch_size: 512
+  learning_rate: 0.001
+  optimizer: "adam"
+  max_epochs: 30
+
+  # Loss
+  loss: "top1"  # bpr, top1, cross_entropy
+  n_sample: 2048  # Number of samples for loss
+
+  # Session
+  session_key: "session_id"
+  time_key: "timestamp"
+
+# Content-Based (TF-IDF)
+tfidf:
+  max_features: 10000
+  ngram_range: [1, 2]
+  min_df: 2
+  max_df: 0.8
+  use_idf: true
+  sublinear_tf: true
+  similarity: "cosine"
+
+# BERT-Based Content
+bert:
+  model_name: "sentence-transformers/all-MiniLM-L6-v2"
+  max_length: 128
+  batch_size: 32
+  normalize_embeddings: true
+  pooling: "mean"
+
+# Ensemble Methods
+ensemble:
+  # Weighted average
+  weighted_average:
+    normalization: "minmax"  # minmax, zscore, rank
+    optimization_metric: "ndcg@10"
+
+  # Rank fusion
+  rank_fusion:
+    method: "reciprocal"  # reciprocal, borda
+    k: 60  # For reciprocal rank fusion
+
+  # Stacking
+  stacking:
+    meta_model: "xgboost"  # lr, rf, xgboost
+    cv_folds: 5
+    use_proba: true
+
+# Diversity & Exploration
+diversity:
+  # Maximal Marginal Relevance
+  mmr:
+    lambda_param: 0.5  # Trade-off between relevance and diversity
+
+  # Determinantal Point Processes
+  dpp:
+    kernel: "rbf"
+    gamma: 1.0
+
+  # Category diversity
+  category:
+    min_categories: 3
+    max_per_category: 3
+
+# Contextual Bandits
+bandits:
+  algorithm: "thompson_sampling"  # ucb, thompson_sampling, epsilon_greedy
+  epsilon: 0.1  # For epsilon-greedy
+  alpha: 1.0  # Prior for Thompson Sampling
+  beta: 1.0
+
+# Hyperparameter Optimization
+hpo:
+  method: "optuna"  # optuna, hyperopt, grid
+  n_trials: 100
+  timeout: 7200  # seconds
+  optimization_metric: "ndcg@10"
+  direction: "maximize"
+
+  # Search space (example for NCF)
+  search_space:
+    embedding_dim: [32, 64, 128, 256]
+    mlp_layers:
+      - [64, 32, 16]
+      - [128, 64, 32]
+      - [256, 128, 64, 32]
+    learning_rate: [0.0001, 0.001, 0.01]
+    dropout: [0.1, 0.2, 0.3, 0.5]
