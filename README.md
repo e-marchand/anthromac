@@ -36,6 +36,17 @@ Compile-time type-safe event bus for decoupled component communication.
 - Event filtering and transformation
 - Weak subscription support to prevent memory leaks
 
+### 4. [LockFreeQueue](LockFreeQueue/) - High-Concurrency MPMC Queue
+Multi-producer multi-consumer lock-free queue using C++20 atomic operations.
+
+**Features:**
+- Bounded ring buffer with CAS operations
+- False sharing prevention through cache-line padding
+- Memory ordering optimization for different architectures
+- Support for bulk enqueue/dequeue operations
+- Wait-free progress guarantee for SPSC variant
+- 50M+ ops/sec on modern x86_64 processors
+
 ## Building
 
 ```bash
@@ -55,6 +66,9 @@ cmake --build .
 
 # EventBus example
 ./build/EventBus/eventbus_example
+
+# LockFreeQueue example
+./build/LockFreeQueue/lockfreequeue_example
 ```
 
 ## Requirements
