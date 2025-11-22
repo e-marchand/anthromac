@@ -1,0 +1,116 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints
+
+# Data
+data/raw/*
+data/processed/*
+data/external/*
+data/annotations/*
+data/datasets/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
+!data/annotations/.gitkeep
+!data/datasets/.gitkeep
+
+# Models
+models/saved_models/*
+models/checkpoints/*
+models/onnx/*
+models/tensorrt/*
+!models/saved_models/.gitkeep
+!models/checkpoints/.gitkeep
+!models/onnx/.gitkeep
+!models/tensorrt/.gitkeep
+
+# Model weights
+*.pt
+*.pth
+*.onnx
+*.engine
+*.trt
+*.weights
+*.h5
+
+# Logs
+logs/
+*.log
+runs/
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Weights & Biases
+wandb/
+
+# DVC
+.dvc/
+*.dvc
+
+# Cache
+.cache/
+*.cache
+.nv_cache/
+
+# Video files
+*.mp4
+*.avi
+*.mov
+*.mkv
+!data/samples/*.mp4
+
+# Image files (except samples)
+*.jpg
+*.jpeg
+*.png
+*.bmp
+!data/samples/*.jpg
+!data/samples/*.png
+
+# Secrets
+.env
+*.pem
+*.key
+
+# Temp
+tmp/
+temp/
+outputs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TensorRT
+*.plan
+
+# Experiments
+experiments/*/
+!experiments/.gitkeep
