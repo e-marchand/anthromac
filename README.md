@@ -58,6 +58,17 @@ Modern JSON parser with DOM and SAX interfaces, optimized for speed.
 - Pretty printing with configurable indentation
 - Comprehensive error reporting
 
+### 6. [NetworkStack](NetworkStack/) - Async Networking Library
+C++20 coroutine-based networking with TCP/UDP and HTTP support.
+
+**Features:**
+- Async TCP server/client using C++20 coroutines
+- UDP socket support with async operations
+- HTTP/1.1 server with routing
+- Zero-copy buffer management
+- Cross-platform (Linux/macOS/Windows)
+- Clean async/await syntax
+
 ## Building
 
 ```bash
@@ -83,6 +94,9 @@ cmake --build .
 
 # JsonParser example
 ./build/JsonParser/jsonparser_example
+
+# NetworkStack example
+./build/NetworkStack/networkstack_example
 ```
 
 ## Requirements

@@ -11,6 +11,7 @@ add_subdirectory(MemoryArena)
 add_subdirectory(EventBus)
 add_subdirectory(LockFreeQueue)
 add_subdirectory(JsonParser)
+add_subdirectory(NetworkStack)
 
 # Enable testing
 enable_testing()
@@ -21,3 +22,4 @@ message(STATUS "  - MemoryArena: Custom Memory Management")
 message(STATUS "  - EventBus: Modern Event System")
 message(STATUS "  - LockFreeQueue: Lock-Free MPMC Queue")
 message(STATUS "  - JsonParser: High-Performance JSON Processing")
+message(STATUS "  - NetworkStack: Async Networking Library")
