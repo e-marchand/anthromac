@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Add subdirectories
 add_subdirectory(ThreadPool)
 add_subdirectory(MemoryArena)
+add_subdirectory(EventBus)
 
 # Enable testing
 enable_testing()
@@ -15,3 +16,4 @@ enable_testing()
 message(STATUS "AnthroMac C++ Projects configured successfully")
 message(STATUS "  - ThreadPool: High-Performance Task Scheduler")
 message(STATUS "  - MemoryArena: Custom Memory Management")
+message(STATUS "  - EventBus: Modern Event System")

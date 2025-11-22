@@ -25,6 +25,17 @@ High-performance memory allocators optimized for different use cases.
 - Ring Buffer Allocator: Circular memory management
 - Up to 10x faster than standard malloc/free
 
+### 3. [EventBus](EventBus/) - Modern Event System
+Compile-time type-safe event bus for decoupled component communication.
+
+**Features:**
+- Type-safe event registration and dispatch
+- Compile-time event validation
+- Thread-safe event delivery
+- Priority-based event handling
+- Event filtering and transformation
+- Weak subscription support to prevent memory leaks
+
 ## Building
 
 ```bash
@@ -41,6 +52,9 @@ cmake --build .
 
 # MemoryArena example
 ./build/MemoryArena/memoryarena_example
+
+# EventBus example
+./build/EventBus/eventbus_example
 ```
 
 ## Requirements
