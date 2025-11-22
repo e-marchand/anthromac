@@ -69,6 +69,17 @@ C++20 coroutine-based networking with TCP/UDP and HTTP support.
 - Cross-platform (Linux/macOS/Windows)
 - Clean async/await syntax
 
+### 7. [Reflection](Reflection/) - Compile-Time Reflection System
+C++ reflection using template metaprogramming and macros.
+
+**Features:**
+- Enumerate class members at compile-time
+- Automatic JSON/XML/Binary serialization
+- Type-safe property access by name
+- Zero runtime overhead for static queries
+- Visitor pattern support
+- No external dependencies
+
 ## Building
 
 ```bash
@@ -97,6 +108,9 @@ cmake --build .
 
 # NetworkStack example
 ./build/NetworkStack/networkstack_example
+
+# Reflection example
+./build/Reflection/reflection_example
 ```
 
 ## Requirements
