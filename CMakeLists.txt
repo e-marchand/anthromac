@@ -16,6 +16,7 @@ add_subdirectory(Reflection)
 add_subdirectory(ExpressionEvaluator)
 add_subdirectory(DatabaseEngine)
 add_subdirectory(MarkdownParser)
+add_subdirectory(CSVParser)
 
 # Enable testing
 enable_testing()
@@ -31,3 +32,4 @@ message(STATUS "  - Reflection: Compile-Time Reflection System")
 message(STATUS "  - ExpressionEvaluator: Runtime Expression JIT")
 message(STATUS "  - DatabaseEngine: Embedded LSM-Tree Storage")
 message(STATUS "  - MarkdownParser: Markdown to HTML Converter")
+message(STATUS "  - CSVParser: RFC-Compliant CSV Parser")

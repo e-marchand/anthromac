@@ -111,6 +111,17 @@ Markdown parser supporting CommonMark and GitHub-flavored Markdown.
 - HTML escaping for safe output
 - Autolink support
 
+### 11. [CSVParser](CSVParser/) - RFC-Compliant CSV Parser
+CSV parser and writer with RFC 4180 compliance and streaming support.
+
+**Features:**
+- RFC 4180 compliant parsing
+- Streaming for large files
+- Custom delimiters (comma, tab, semicolon)
+- Quoted field handling with escape sequences
+- Header support
+- Type conversion (int, double, bool, string)
+
 ## Building
 
 ```bash
@@ -151,6 +162,9 @@ cmake --build .
 
 # MarkdownParser example
 ./build/MarkdownParser/markdown_example
+
+# CSVParser example
+./build/CSVParser/csv_example
 ```
 
 ## Requirements
