@@ -52,29 +52,45 @@ struct SidebarView: View {
 
 struct ServiceRow: View {
     let service: WebService
+    @State private var hasAssetIcon = false
 
     var body: some View {
         HStack(spacing: 12) {
-            // Service icon with modern styling
-            ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(
-                        LinearGradient(
-                            colors: [service.color.opacity(0.3), service.color.opacity(0.15)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 36, height: 36)
-                    .overlay(
+            // Service icon - tries asset first, falls back to SF Symbol
+            Group {
+                if let assetName = iconAssetName(for: service.name), hasAssetIcon {
+                    // Use custom asset icon
+                    Image(assetName)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 36, height: 36)
+                        .cornerRadius(8)
+                } else {
+                    // Fallback to styled SF Symbol
+                    ZStack {
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(service.color.opacity(0.3), lineWidth: 1)
-                    )
+                            .fill(
+                                LinearGradient(
+                                    colors: [service.color.opacity(0.3), service.color.opacity(0.15)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 36, height: 36)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(service.color.opacity(0.3), lineWidth: 1)
+                            )
 
-                Image(systemName: iconForService(service.name))
-                    .foregroundStyle(service.color)
-                    .font(.system(size: 18, weight: .semibold))
-                    .symbolRenderingMode(.hierarchical)
+                        Image(systemName: iconForService(service.name))
+                            .foregroundStyle(service.color)
+                            .font(.system(size: 18, weight: .semibold))
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                }
+            }
+            .onAppear {
+                checkAssetAvailability()
             }
 
             Text(service.name)
@@ -83,7 +99,28 @@ struct ServiceRow: View {
         .padding(.vertical, 4)
     }
 
+    private func iconAssetName(for serviceName: String) -> String? {
+        switch serviceName {
+        case "ChatGPT": return "chatgpt"
+        case "Claude", "Claude Code": return "claude"
+        case "Gemini": return "gemini"
+        case "Grok": return "grok"
+        case "GitHub Copilot": return "github"
+        default: return nil
+        }
+    }
+
+    private func checkAssetAvailability() {
+        if let assetName = iconAssetName(for: service.name) {
+            // Check if the asset exists by trying to load it
+            if NSImage(named: assetName) != nil {
+                hasAssetIcon = true
+            }
+        }
+    }
+
     private func iconForService(_ name: String) -> String {
+        // Fallback SF Symbols
         switch name {
         case "ChatGPT": return "message.badge.filled.fill"
         case "Claude": return "brain.head.profile"
