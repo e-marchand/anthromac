@@ -1,80 +1,39 @@
 # Quick Setup Guide
 
+The Xcode project is already configured and ready to use! Just follow these simple steps:
+
 ## Step-by-Step Instructions
 
-### 1. Open Xcode
+### 1. Open the Project
 
-Launch Xcode on your Mac.
+1. Navigate to the `AIWebAppHub` folder
+2. Double-click `AIWebAppHub.xcodeproj` to open it in Xcode
 
-### 2. Create New Project
+**Alternative:** In Finder, navigate to the repository and double-click `AIWebAppHub/AIWebAppHub.xcodeproj`
 
-1. Select **File** → **New** → **Project**
-2. Choose **macOS** → **App**
-3. Click **Next**
+### 2. Configure Code Signing
 
-### 3. Configure Project
-
-Fill in the following details:
-
-- **Product Name**: `AIWebAppHub`
-- **Team**: Select your development team
-- **Organization Identifier**: `com.yourname` (or your preferred identifier)
-- **Bundle Identifier**: Will auto-populate as `com.yourname.AIWebAppHub`
-- **Interface**: **SwiftUI**
-- **Language**: **Swift**
-- **Use Core Data**: Unchecked
-- **Include Tests**: Optional (you can check if you want)
-
-Click **Next**
-
-### 4. Save Location
-
-1. Navigate to this repository directory (`anthromac/`)
-2. Click **Create**
-
-### 5. Add Source Files
-
-1. In Xcode's Project Navigator (left sidebar), you'll see the `AIWebAppHub` folder
-2. Delete the default files:
-   - Right-click `AIWebAppHubApp.swift` → Delete → Move to Trash
-   - Right-click `ContentView.swift` → Delete → Move to Trash
-3. Add our source files:
-   - Right-click the `AIWebAppHub` folder → **Add Files to "AIWebAppHub"**
-   - Navigate to `AIWebAppHub/AIWebAppHub/` directory
-   - Select ALL files and folders
-   - Make sure **Copy items if needed** is UNCHECKED
-   - Make sure **Create groups** is selected
-   - Click **Add**
-
-### 6. Configure Entitlements
-
-1. Click on the blue `AIWebAppHub` project icon at the top of the Project Navigator
+1. In Xcode, select the blue `AIWebAppHub` project icon in the Project Navigator (left sidebar)
 2. Select the `AIWebAppHub` target
 3. Go to the **Signing & Capabilities** tab
-4. Click **+ Capability**
-5. Add **App Sandbox**
-6. Configure the sandbox:
-   - Under **Network**: Check **Outgoing Connections (Client)**
-   - Under **File Access**: Check **User Selected File** (Read/Write)
+4. Under **Signing**, select your **Team** from the dropdown
+   - If you don't have a team, you can use a free Apple ID
+   - You may need to sign in with your Apple ID in Xcode Preferences
 
-### 7. Set Info.plist
+### 3. Verify Entitlements (Already Configured)
 
-1. In the **Info** tab of your target
-2. Click **+** to add a new key
-3. Add `NSAppTransportSecurity` → Dictionary
-4. Inside it, add `NSAllowsArbitraryLoads` → Boolean → YES
-   - This allows loading of the web services (they all use HTTPS but this prevents issues)
+The following should already be set up:
+- ✅ App Sandbox enabled
+- ✅ Network: Outgoing Connections (Client)
+- ✅ File Access: User Selected File (Read/Write)
 
-### 8. Set Deployment Target
+### 4. Build and Run
 
-1. In the **General** tab
-2. Set **Minimum Deployments** to **macOS 13.0** or later
-
-### 9. Build and Run
-
-1. Select a destination: **My Mac** (or **My Mac (Designed for iPad)** if needed)
+1. Select **My Mac** as the destination (top toolbar)
 2. Press **⌘R** or click the **Play** button
-3. The app should build and launch
+3. The app should build and launch automatically
+
+**That's it!** The project is fully configured with all source files, entitlements, and build settings.
 
 ## First Run
 

@@ -42,15 +42,15 @@ AIWebAppHub/
 
 ## Quick Start
 
-See [SETUP.md](SETUP.md) for detailed step-by-step instructions.
+The Xcode project is fully configured and ready to use!
 
 ### TL;DR
 
-1. Open Xcode → Create new macOS App project named "AIWebAppHub"
-2. Add all files from `AIWebAppHub/AIWebAppHub/` to your project
-3. Configure App Sandbox with network client access
-4. Set minimum deployment to macOS 13.0+
-5. Build and run (⌘R)
+1. Open `AIWebAppHub/AIWebAppHub.xcodeproj` in Xcode
+2. Select your development team in Signing & Capabilities
+3. Build and run (⌘R)
+
+See [SETUP.md](SETUP.md) for detailed step-by-step instructions.
 
 ## Usage
 
