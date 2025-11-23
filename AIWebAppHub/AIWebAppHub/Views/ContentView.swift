@@ -6,13 +6,14 @@ struct ContentView: View {
     @AppStorage("showServiceNames") private var showServiceNames = true
 
     var body: some View {
-        NavigationSplitView(columnVisibility: .constant(.all)) {
+        NavigationSplitView {
             SidebarView()
                 .navigationSplitViewColumnWidth(
                     min: showServiceNames ? 200 : 80,
                     ideal: showServiceNames ? 240 : 80,
                     max: showServiceNames ? 300 : 80
                 )
+                .toolbar(removing: .sidebarToggle)
         } detail: {
             if let service = appState.selectedService {
                 let store = webViewManager.getOrCreateWebViewStore(for: service)
