@@ -182,14 +182,26 @@ extension WebViewStore: WKNavigationDelegate {
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         // Handle URL schemes that might require special handling
         if let url = navigationAction.request.url {
-            // Allow navigation for auth flows
-            if url.scheme == "https" || url.scheme == "http" {
+            let scheme = url.scheme?.lowercased() ?? ""
+
+            // Allow standard web schemes
+            if scheme == "https" || scheme == "http" {
                 decisionHandler(.allow)
                 return
             }
 
-            // Handle custom URL schemes (e.g., for OAuth)
-            if let scheme = url.scheme, !["http", "https"].contains(scheme) {
+            // Internal schemes that should be handled by WebView or ignored
+            let internalSchemes = ["about", "javascript", "data", "blob", "file"]
+            if internalSchemes.contains(scheme) {
+                // Let WebView handle these internally or ignore them
+                decisionHandler(.allow)
+                return
+            }
+
+            // Handle custom URL schemes (e.g., for OAuth deep links)
+            // Only open in workspace if it's a valid custom scheme
+            if !scheme.isEmpty && scheme != "about" {
+                // Try to open in external app (for OAuth callbacks, etc.)
                 NSWorkspace.shared.open(url)
                 decisionHandler(.cancel)
                 return
@@ -209,8 +221,14 @@ extension WebViewStore: WKUIDelegate {
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
         // If it's a popup/new window request, load it in the same webview
         if let url = navigationAction.request.url {
-            // For auth flows, we might want to open in the same view
-            webView.load(URLRequest(url: url))
+            let scheme = url.scheme?.lowercased() ?? ""
+
+            // Only load if it's a real URL, not about:blank or javascript:
+            if scheme == "http" || scheme == "https" {
+                // For auth flows and real URLs, open in the same view
+                webView.load(URLRequest(url: url))
+            }
+            // Ignore about:blank and other internal schemes
         }
         return nil
     }
