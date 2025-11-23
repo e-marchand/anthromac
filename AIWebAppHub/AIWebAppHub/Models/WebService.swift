@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-struct WebService: Identifiable, Equatable {
+struct WebService: Identifiable, Equatable, Hashable {
     let id = UUID()
     let name: String
     let url: URL
@@ -12,6 +12,10 @@ struct WebService: Identifiable, Equatable {
 
     static func == (lhs: WebService, rhs: WebService) -> Bool {
         lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 
     static let allServices: [WebService] = [
