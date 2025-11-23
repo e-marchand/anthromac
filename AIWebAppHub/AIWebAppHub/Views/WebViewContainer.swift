@@ -85,9 +85,6 @@ class WebViewStore: NSObject, ObservableObject {
         // Disable fraudulent website warnings to prevent OAuth blocking
         configuration.preferences.isFraudulentWebsiteWarningEnabled = false
 
-        // Allow cross-origin resource sharing for OAuth flows
-        configuration.preferences.setValue(true, forKey: "allowUniversalAccessFromFileURLs")
-
         // Suppress subframe navigation warnings for OAuth
         configuration.suppressesIncrementalRendering = false
 
