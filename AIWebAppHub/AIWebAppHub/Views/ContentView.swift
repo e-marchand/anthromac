@@ -9,7 +9,63 @@ struct ContentView: View {
             SidebarView()
         } detail: {
             if let service = appState.selectedService {
+                let store = webViewManager.getOrCreateWebViewStore(for: service)
+
                 MultiWebViewContainer(selectedService: service, manager: webViewManager)
+                    .id(service.id) // ensure toolbar state refreshes when selection changes
+                    .toolbar {
+                        // Back/Forward on the leading side (navigation placement)
+                        ToolbarItemGroup(placement: .navigation) {
+                            Button(action: { store.goBack() }) {
+                                Image(systemName: "chevron.left")
+                            }
+                            .controlSize(.small)
+                            .help("Back")
+                            .disabled(!store.canGoBack)
+
+                            Button(action: { store.goForward() }) {
+                                Image(systemName: "chevron.right")
+                            }
+                            .controlSize(.small)
+                            .help("Forward")
+                            .disabled(!store.canGoForward)
+                        }
+
+                        // Reload
+                        ToolbarItem(placement: .automatic) {
+                            Button(action: { store.reload() }) {
+                                Image(systemName: "arrow.clockwise")
+                            }
+                            .controlSize(.small)
+                            .help("Reload")
+                        }
+                        
+                        // Home
+                        ToolbarItem(placement: .automatic) {
+                            Button(action: { store.resetToHome() }) {
+                                Image(systemName: "house")
+                            }
+                            .controlSize(.small)
+                            .help("Go to home page")
+                        }
+
+                        // Loading indicator on the trailing/status area
+                        ToolbarItem(placement: .status) {
+                            if store.isLoading {
+                                ProgressView()
+                                    .controlSize(.small)
+                            }
+                        }
+
+                        // Title in the center
+                        ToolbarItem(placement: .principal) {
+                            Text(service.name)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                        }
+                    }
             } else {
                 Text("Select a service from the sidebar")
                     .foregroundColor(.secondary)
@@ -45,61 +101,10 @@ struct MultiWebViewContainer: View {
             ForEach(WebService.allServices, id: \.id) { service in
                 let store = manager.getOrCreateWebViewStore(for: service)
 
-                VStack(spacing: 0) {
-                    // Compact navigation bar
-                    HStack(spacing: 8) {
-                        Button(action: { store.goBack() }) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 11, weight: .medium))
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!store.canGoBack)
-                        .opacity(store.canGoBack ? 1.0 : 0.3)
-                        .help("Go back")
-
-                        Button(action: { store.goForward() }) {
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 11, weight: .medium))
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!store.canGoForward)
-                        .opacity(store.canGoForward ? 1.0 : 0.3)
-                        .help("Go forward")
-
-                        Divider()
-                            .frame(height: 12)
-
-                        Button(action: { store.resetToHome() }) {
-                            Image(systemName: "house")
-                                .font(.system(size: 11, weight: .medium))
-                        }
-                        .buttonStyle(.plain)
-                        .help("Go to home page")
-
-                        Button(action: { store.reload() }) {
-                            Image(systemName: "arrow.clockwise")
-                                .font(.system(size: 11, weight: .medium))
-                        }
-                        .buttonStyle(.plain)
-                        .help("Reload current page")
-
-                        if store.isLoading {
-                            ProgressView()
-                                .controlSize(.small)
-                                .scaleEffect(0.6)
-                        }
-
-                        Spacer()
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color(NSColor.windowBackgroundColor).opacity(0.5))
-
-                    // WebView
-                    WebView(webViewStore: store)
-                }
-                .opacity(service.id == selectedService.id ? 1 : 0)
-                .allowsHitTesting(service.id == selectedService.id)
+                // Only the WebView; toolbar lives in ContentView
+                WebView(webViewStore: store)
+                    .opacity(service.id == selectedService.id ? 1 : 0)
+                    .allowsHitTesting(service.id == selectedService.id)
             }
         }
     }

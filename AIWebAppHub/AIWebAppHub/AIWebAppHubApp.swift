@@ -10,7 +10,10 @@ struct AIWebAppHubApp: App {
                 .environmentObject(appState)
                 .frame(minWidth: 1000, minHeight: 600)
         }
-        .windowStyle(.hiddenTitleBar)
+        // Use a compact unified toolbar so the top bar is not too tall.
+        .windowToolbarStyle(.unifiedCompact)
+        // Keep the title bar visible so the toolbar can appear.
+        // Remove the hidden title bar style that would hide the toolbar area.
         .commands {
             CommandGroup(replacing: .newItem) {}
         }

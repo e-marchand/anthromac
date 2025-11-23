@@ -1,19 +1,8 @@
 {
   "images" : [
     {
-      "filename" : "chatgpt.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "filename" : "chatgpt@2x.png",
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "filename" : "chatgpt@3x.png",
-      "idiom" : "universal",
-      "scale" : "3x"
+      "filename" : "openai.png",
+      "idiom" : "universal"
     }
   ],
   "info" : {
