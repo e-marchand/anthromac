@@ -3,38 +3,57 @@ import AppKit
 
 struct SidebarView: View {
     @EnvironmentObject var appState: AppState
+    @AppStorage("showServiceNames") private var showServiceNames = true
 
     var body: some View {
-        List(WebService.allServices, selection: $appState.selectedService) { service in
-            ServiceRow(service: service)
-                .tag(service)
-                .contextMenu {
-                    if let bundleID = service.nativeAppBundleID,
-                       let appName = service.nativeAppName,
-                       isNativeAppInstalled(bundleID: bundleID) {
-                        Button("Open in \(appName)") {
-                            openNativeApp(bundleID: bundleID)
+        VStack(spacing: 0) {
+            List(WebService.allServices, selection: $appState.selectedService) { service in
+                ServiceRow(service: service, showName: showServiceNames)
+                    .tag(service)
+                    .contextMenu {
+                        if let bundleID = service.nativeAppBundleID,
+                           let appName = service.nativeAppName,
+                           isNativeAppInstalled(bundleID: bundleID) {
+                            Button("Open in \(appName)") {
+                                openNativeApp(bundleID: bundleID)
+                            }
+                        }
+
+                        Button("Reload") {
+                            NotificationCenter.default.post(
+                                name: .reloadWebView,
+                                object: nil,
+                                userInfo: ["serviceID": service.id.uuidString]
+                            )
+                        }
+
+                        Button("Clear Cookies & Cache") {
+                            NotificationCenter.default.post(
+                                name: .clearWebViewData,
+                                object: nil,
+                                userInfo: ["serviceID": service.id.uuidString]
+                            )
                         }
                     }
+            }
+            .listStyle(.sidebar)
+            .safeAreaInset(edge: .top) {
+                Color.clear.frame(height: 8)
+            }
 
-                    Button("Reload") {
-                        NotificationCenter.default.post(
-                            name: .reloadWebView,
-                            object: nil,
-                            userInfo: ["serviceID": service.id.uuidString]
-                        )
-                    }
-
-                    Button("Clear Cookies & Cache") {
-                        NotificationCenter.default.post(
-                            name: .clearWebViewData,
-                            object: nil,
-                            userInfo: ["serviceID": service.id.uuidString]
-                        )
-                    }
+            // Sidebar footer with toggle
+            VStack(spacing: 0) {
+                Divider()
+                Toggle(isOn: $showServiceNames) {
+                    Label("Show Names", systemImage: "textformat")
+                        .font(.caption)
                 }
+                .toggleStyle(.checkbox)
+                .controlSize(.small)
+                .padding(8)
+            }
+            .background(Color(NSColor.controlBackgroundColor))
         }
-        .listStyle(.sidebar)
         .frame(minWidth: 200)
     }
 
@@ -52,6 +71,7 @@ struct SidebarView: View {
 
 struct ServiceRow: View {
     let service: WebService
+    let showName: Bool
     @State private var hasAssetIcon = false
 
     var body: some View {
@@ -93,10 +113,13 @@ struct ServiceRow: View {
                 checkAssetAvailability()
             }
 
-            Text(service.name)
-                .font(.system(size: 13, weight: .medium))
+            if showName {
+                Text(service.name)
+                    .font(.system(size: 13, weight: .medium))
+            }
         }
         .padding(.vertical, 4)
+        .frame(maxWidth: .infinity, alignment: showName ? .leading : .center)
     }
 
     private func iconAssetName(for serviceName: String) -> String? {
