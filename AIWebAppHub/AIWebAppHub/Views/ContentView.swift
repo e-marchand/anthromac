@@ -46,37 +46,41 @@ struct MultiWebViewContainer: View {
                 let store = manager.getOrCreateWebViewStore(for: service)
 
                 VStack(spacing: 0) {
-                    // Navigation bar
-                    HStack {
+                    // Compact navigation bar
+                    HStack(spacing: 8) {
                         Button(action: { store.goBack() }) {
                             Image(systemName: "chevron.left")
+                                .font(.system(size: 11, weight: .medium))
                         }
+                        .buttonStyle(.plain)
                         .disabled(!store.canGoBack)
+                        .opacity(store.canGoBack ? 1.0 : 0.3)
 
                         Button(action: { store.goForward() }) {
                             Image(systemName: "chevron.right")
+                                .font(.system(size: 11, weight: .medium))
                         }
+                        .buttonStyle(.plain)
                         .disabled(!store.canGoForward)
+                        .opacity(store.canGoForward ? 1.0 : 0.3)
 
                         Button(action: { store.reload() }) {
                             Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 11, weight: .medium))
                         }
-
-                        Spacer()
+                        .buttonStyle(.plain)
 
                         if store.isLoading {
                             ProgressView()
-                                .scaleEffect(0.7)
+                                .controlSize(.small)
+                                .scaleEffect(0.6)
                         }
-
-                        Text(service.name)
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.secondary)
 
                         Spacer()
                     }
-                    .padding(8)
-                    .background(Color(NSColor.windowBackgroundColor))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color(NSColor.windowBackgroundColor).opacity(0.5))
 
                     // WebView
                     WebView(webViewStore: store)
