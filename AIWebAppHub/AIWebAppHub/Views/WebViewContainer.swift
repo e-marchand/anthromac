@@ -158,6 +158,11 @@ class WebViewStore: NSObject, ObservableObject {
         webView.reload()
     }
 
+    func resetToHome() {
+        // Navigate back to the original service URL
+        webView.load(URLRequest(url: service.url))
+    }
+
     func clearData() {
         let dataStore = WKWebsiteDataStore.default()
         let dataTypes = WKWebsiteDataStore.allWebsiteDataTypes()

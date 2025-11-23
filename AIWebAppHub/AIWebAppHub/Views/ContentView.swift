@@ -55,6 +55,7 @@ struct MultiWebViewContainer: View {
                         .buttonStyle(.plain)
                         .disabled(!store.canGoBack)
                         .opacity(store.canGoBack ? 1.0 : 0.3)
+                        .help("Go back")
 
                         Button(action: { store.goForward() }) {
                             Image(systemName: "chevron.right")
@@ -63,12 +64,24 @@ struct MultiWebViewContainer: View {
                         .buttonStyle(.plain)
                         .disabled(!store.canGoForward)
                         .opacity(store.canGoForward ? 1.0 : 0.3)
+                        .help("Go forward")
+
+                        Divider()
+                            .frame(height: 12)
+
+                        Button(action: { store.resetToHome() }) {
+                            Image(systemName: "house")
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        .buttonStyle(.plain)
+                        .help("Go to home page")
 
                         Button(action: { store.reload() }) {
                             Image(systemName: "arrow.clockwise")
                                 .font(.system(size: 11, weight: .medium))
                         }
                         .buttonStyle(.plain)
+                        .help("Reload current page")
 
                         if store.isLoading {
                             ProgressView()
