@@ -6,55 +6,46 @@ struct SidebarView: View {
     @AppStorage("showServiceNames") private var showServiceNames = true
 
     var body: some View {
-        VStack(spacing: 0) {
-            List(WebService.allServices, selection: $appState.selectedService) { service in
-                ServiceRow(service: service, showName: showServiceNames)
-                    .tag(service)
-                    .contextMenu {
-                        if let bundleID = service.nativeAppBundleID,
-                           let appName = service.nativeAppName,
-                           isNativeAppInstalled(bundleID: bundleID) {
-                            Button("Open in \(appName)") {
-                                openNativeApp(bundleID: bundleID)
-                            }
-                        }
-
-                        Button("Reload") {
-                            NotificationCenter.default.post(
-                                name: .reloadWebView,
-                                object: nil,
-                                userInfo: ["serviceID": service.id.uuidString]
-                            )
-                        }
-
-                        Button("Clear Cookies & Cache") {
-                            NotificationCenter.default.post(
-                                name: .clearWebViewData,
-                                object: nil,
-                                userInfo: ["serviceID": service.id.uuidString]
-                            )
+        List(WebService.allServices, selection: $appState.selectedService) { service in
+            ServiceRow(service: service, showName: showServiceNames)
+                .tag(service)
+                .contextMenu {
+                    if let bundleID = service.nativeAppBundleID,
+                       let appName = service.nativeAppName,
+                       isNativeAppInstalled(bundleID: bundleID) {
+                        Button("Open in \(appName)") {
+                            openNativeApp(bundleID: bundleID)
                         }
                     }
-            }
-            .listStyle(.sidebar)
-            .safeAreaInset(edge: .top) {
-                Color.clear.frame(height: 8)
-            }
 
-            // Sidebar footer with toggle
-            VStack(spacing: 0) {
-                Divider()
-                Toggle(isOn: $showServiceNames) {
-                    Label("Show Names", systemImage: "textformat")
-                        .font(.caption)
+                    Button("Reload") {
+                        NotificationCenter.default.post(
+                            name: .reloadWebView,
+                            object: nil,
+                            userInfo: ["serviceID": service.id.uuidString]
+                        )
+                    }
+
+                    Button("Clear Cookies & Cache") {
+                        NotificationCenter.default.post(
+                            name: .clearWebViewData,
+                            object: nil,
+                            userInfo: ["serviceID": service.id.uuidString]
+                        )
+                    }
+
+                    Divider()
+
+                    Button(showServiceNames ? "Hide Service Names" : "Show Service Names") {
+                        showServiceNames.toggle()
+                    }
                 }
-                .toggleStyle(.checkbox)
-                .controlSize(.small)
-                .padding(8)
-            }
-            .background(Color(NSColor.controlBackgroundColor))
         }
-        .frame(minWidth: 200)
+        .listStyle(.sidebar)
+        .safeAreaInset(edge: .top) {
+            Color.clear.frame(height: 8)
+        }
+        .frame(minWidth: showServiceNames ? 200 : 60, idealWidth: showServiceNames ? 240 : 60)
     }
 
     private func isNativeAppInstalled(bundleID: String) -> Bool {
