@@ -122,6 +122,28 @@ CSV parser and writer with RFC 4180 compliance and streaming support.
 - Header support
 - Type conversion (int, double, bool, string)
 
+### 12. [ConfigParser](ConfigParser/) - INI/TOML/YAML Configuration Parser
+Configuration file parser supporting multiple formats with unified API.
+
+**Features:**
+- Support for INI, TOML, and YAML formats
+- Unified API for all formats
+- Type-safe value retrieval
+- Nested configuration sections
+- Auto-format detection from file extension
+- Config file generation
+
+### 13. [TemplateEngine](TemplateEngine/) - Mustache-Style Template Engine
+Text template engine with variable substitution, conditionals, and loops.
+
+**Features:**
+- Variable substitution `{{ var }}`
+- Conditionals `{% if %}` and loops `{% for %}`
+- Built-in filters (upper, lower, capitalize, etc.)
+- Custom filter registration
+- HTML auto-escaping for security
+- Template file support
+
 ## Building
 
 ```bash
@@ -165,6 +187,12 @@ cmake --build .
 
 # CSVParser example
 ./build/CSVParser/csv_example
+
+# ConfigParser example
+./build/ConfigParser/config_example
+
+# TemplateEngine example
+./build/TemplateEngine/template_example
 ```
 
 ## Requirements
