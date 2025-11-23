@@ -100,6 +100,17 @@ Embedded database engine implementing Log-Structured Merge-Tree architecture.
 - Multi-level compaction for space efficiency
 - Iterator support for range scans
 
+### 10. [MarkdownParser](MarkdownParser/) - Markdown to HTML Converter
+Markdown parser supporting CommonMark and GitHub-flavored Markdown.
+
+**Features:**
+- Full CommonMark support (headers, lists, code, links, images)
+- GitHub extensions (tables, task lists, strikethrough)
+- Inline and block-level parsing
+- Configurable HTML output (pretty-print or minified)
+- HTML escaping for safe output
+- Autolink support
+
 ## Building
 
 ```bash
@@ -137,6 +148,9 @@ cmake --build .
 
 # DatabaseEngine example
 ./build/DatabaseEngine/db_example
+
+# MarkdownParser example
+./build/MarkdownParser/markdown_example
 ```
 
 ## Requirements

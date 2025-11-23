@@ -15,6 +15,7 @@ add_subdirectory(NetworkStack)
 add_subdirectory(Reflection)
 add_subdirectory(ExpressionEvaluator)
 add_subdirectory(DatabaseEngine)
+add_subdirectory(MarkdownParser)
 
 # Enable testing
 enable_testing()
@@ -29,3 +30,4 @@ message(STATUS "  - NetworkStack: Async Networking Library")
 message(STATUS "  - Reflection: Compile-Time Reflection System")
 message(STATUS "  - ExpressionEvaluator: Runtime Expression JIT")
 message(STATUS "  - DatabaseEngine: Embedded LSM-Tree Storage")
+message(STATUS "  - MarkdownParser: Markdown to HTML Converter")
