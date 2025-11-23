@@ -25,6 +25,7 @@ evaluate>=0.4.0
 # Utils
 tqdm>=4.65.0
 pyyaml>=6.0
+requests>=2.28.0  # For GitHub API
 
 # Code quality
 black>=23.0.0  # Code formatting

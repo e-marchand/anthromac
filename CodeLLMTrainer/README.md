@@ -41,28 +41,50 @@ pip install -r requirements.txt
 
 ### 1. Prepare Dataset
 
+**Option A: Collect from GitHub by Topics**
+
+```python
+from src.data.github_scraper import GitHubScraper
+
+# Initialize scraper with GitHub token
+scraper = GitHubScraper(
+    api_token='your_github_token',  # Optional but recommended
+    language='4d',
+    file_extensions=['.4dm', '.4d']
+)
+
+# Search repositories using 4D topics
+topics = ['4d-component', '4d-code', '4d-project', '4dpop']
+repos = scraper.search_by_topics(
+    topics=topics,
+    min_stars=1,
+    max_repos=50
+)
+
+# Download code files
+code_samples = scraper.download_code_files(
+    repos,
+    max_files_per_repo=20
+)
+```
+
+**Option B: Collect from Local Directory**
+
 ```python
 from src.data.collector import CodeCollector
-from src.data.preprocessor import CodePreprocessor
 
-# Collect 4D code from repositories
+# Collect from local files
 collector = CodeCollector(
     language='4d',
-    sources=['github', 'local'],
+    file_extensions=['.4dm', '.4d'],
     min_file_size=100,
     max_file_size=10000
 )
 
-code_samples = collector.collect(n_samples=10000)
-
-# Preprocess and clean
-preprocessor = CodePreprocessor(
-    language='4d',
-    remove_comments=False,
-    deduplicate=True
+code_samples = collector.collect_from_directory(
+    directory='/path/to/4d/code',
+    recursive=True
 )
-
-cleaned_data = preprocessor.process(code_samples)
 ```
 
 ### 2. Format for Training
@@ -142,29 +164,49 @@ print(generated_code)
 
 ### Code Collection from GitHub
 
+**Search by 4D Topics**
+
 ```python
 from src.data.github_scraper import GitHubScraper
 
 scraper = GitHubScraper(
-    api_token='your_token',
+    api_token='your_github_token',  # Get from https://github.com/settings/tokens
     language='4d',
-    min_stars=5,
-    file_extensions=['.4dm']
+    file_extensions=['.4dm', '.4d']
 )
 
-# Search repositories
-repos = scraper.search_repositories(
-    query='language:4d',
+# Search using 4D-specific topics
+topics = [
+    '4d-component',              # 4D components and plugins
+    '4d-code',                   # General 4D code examples
+    '4d-project',                # Complete 4D projects
+    '4dpop',                     # 4D Pop framework
+    '4d-project-dependencies',   # Project dependencies
+    '4d-database',               # Database operations
+    '4d-language'                # Language examples
+]
+
+repos = scraper.search_by_topics(
+    topics=topics,
+    min_stars=1,
     max_repos=100
 )
 
+print(f"Found {len(repos)} repositories")
+
 # Download code files
-code_files = scraper.download_code(
+code_samples = scraper.download_code_files(
     repos,
-    filter_tests=True,
-    filter_generated=True
+    max_files_per_repo=50  # Limit files per repo
 )
+
+print(f"Downloaded {len(code_samples)} code files")
 ```
+
+**Rate Limiting**
+- Without token: 60 requests/hour
+- With token: 5000 requests/hour
+- Automatic rate limit handling included
 
 ### Data Cleaning Pipeline
 
