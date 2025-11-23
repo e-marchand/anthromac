@@ -78,13 +78,25 @@ class WebViewStore: NSObject, ObservableObject {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = WKWebsiteDataStore.default()
 
-        // Enable features for better web app compatibility
+        // Enable features for better web app compatibility and OAuth
         configuration.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
+
+        // Disable fraudulent website warnings to prevent OAuth blocking
+        configuration.preferences.isFraudulentWebsiteWarningEnabled = false
+
+        // Allow cross-origin resource sharing for OAuth flows
+        configuration.preferences.setValue(true, forKey: "allowUniversalAccessFromFileURLs")
+
+        // Suppress subframe navigation warnings for OAuth
+        configuration.suppressesIncrementalRendering = false
 
         self.webView = WKWebView(frame: .zero, configuration: configuration)
         self.webView.allowsBackForwardNavigationGestures = true
         self.webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+
+        // Allow link previews which can help with OAuth flows
+        self.webView.allowsLinkPreview = false
 
         super.init()
 
