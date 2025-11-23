@@ -45,7 +45,6 @@ struct SidebarView: View {
         .safeAreaInset(edge: .top) {
             Color.clear.frame(height: 8)
         }
-        .frame(minWidth: showServiceNames ? 200 : 60, idealWidth: showServiceNames ? 240 : 60)
     }
 
     private func isNativeAppInstalled(bundleID: String) -> Bool {

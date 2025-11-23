@@ -3,10 +3,16 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var webViewManager = WebViewManager()
+    @AppStorage("showServiceNames") private var showServiceNames = true
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: .constant(.all)) {
             SidebarView()
+                .navigationSplitViewColumnWidth(
+                    min: showServiceNames ? 200 : 60,
+                    ideal: showServiceNames ? 240 : 60,
+                    max: showServiceNames ? 300 : 60
+                )
         } detail: {
             if let service = appState.selectedService {
                 let store = webViewManager.getOrCreateWebViewStore(for: service)
