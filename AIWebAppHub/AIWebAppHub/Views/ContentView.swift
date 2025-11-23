@@ -9,9 +9,9 @@ struct ContentView: View {
         NavigationSplitView(columnVisibility: .constant(.all)) {
             SidebarView()
                 .navigationSplitViewColumnWidth(
-                    min: showServiceNames ? 200 : 60,
-                    ideal: showServiceNames ? 240 : 60,
-                    max: showServiceNames ? 300 : 60
+                    min: showServiceNames ? 200 : 80,
+                    ideal: showServiceNames ? 240 : 80,
+                    max: showServiceNames ? 300 : 80
                 )
         } detail: {
             if let service = appState.selectedService {
