@@ -55,50 +55,41 @@ struct ServiceRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Service icon
-            if let iconName = iconAssetName(for: service.name) {
-                Image(iconName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 32, height: 32)
-                    .cornerRadius(6)
-            } else {
-                // Fallback to SF Symbol if icon not found
-                ZStack {
-                    Circle()
-                        .fill(service.color.opacity(0.2))
-                        .frame(width: 32, height: 32)
+            // Service icon with modern styling
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(
+                        LinearGradient(
+                            colors: [service.color.opacity(0.3), service.color.opacity(0.15)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 36, height: 36)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(service.color.opacity(0.3), lineWidth: 1)
+                    )
 
-                    Image(systemName: iconForService(service.name))
-                        .foregroundColor(service.color)
-                        .font(.system(size: 16, weight: .semibold))
-                }
+                Image(systemName: iconForService(service.name))
+                    .foregroundStyle(service.color)
+                    .font(.system(size: 18, weight: .semibold))
+                    .symbolRenderingMode(.hierarchical)
             }
 
             Text(service.name)
-                .font(.system(size: 13))
+                .font(.system(size: 13, weight: .medium))
         }
         .padding(.vertical, 4)
     }
 
-    private func iconAssetName(for serviceName: String) -> String? {
-        switch serviceName {
-        case "ChatGPT": return "chatgpt"
-        case "Claude", "Claude Code": return "claude"
-        case "Gemini": return "gemini"
-        case "Grok": return "grok"
-        case "GitHub Copilot": return "github"
-        default: return nil
-        }
-    }
-
     private func iconForService(_ name: String) -> String {
-        // Fallback SF Symbols
         switch name {
-        case "ChatGPT": return "message.circle.fill"
-        case "Claude", "Claude Code": return "brain.fill"
-        case "Gemini": return "sparkles"
-        case "Grok": return "bolt.circle.fill"
+        case "ChatGPT": return "message.badge.filled.fill"
+        case "Claude": return "brain.head.profile"
+        case "Claude Code": return "curlybraces.square.fill"
+        case "Gemini": return "sparkles.square.filled.on.square"
+        case "Grok": return "bolt.shield.fill"
         case "GitHub Copilot": return "chevron.left.forwardslash.chevron.right"
         default: return "globe"
         }
