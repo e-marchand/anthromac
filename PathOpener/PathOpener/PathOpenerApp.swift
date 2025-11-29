@@ -7,39 +7,15 @@ func openPath(_ path: String, withApp app: AppInfo) {
     NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration())
 }
 
-@main
-struct PathOpenerApp: App {
-    @StateObject private var appManager = AppManager.shared
-    @State private var pathToOpen: String?
-    @State private var showSettings = false
-    @State private var showAppSelector = false
+// App state management
+class AppState: ObservableObject {
+    @Published var currentView: ViewMode = .settings
+    @Published var pathToOpen: String?
 
-    var body: some Scene {
-        WindowGroup {
-            if showSettings {
-                SettingsView()
-                    .frame(minWidth: 600, minHeight: 400)
-            } else if showAppSelector, let path = pathToOpen {
-                AppSelectorView(path: path, onAppSelected: { app in
-                    openPath(path, withApp: app)
-                    NSApplication.shared.terminate(nil)
-                })
-                .frame(minWidth: 400, minHeight: 300)
-            } else {
-                ContentView(onShowSettings: {
-                    showSettings = true
-                })
-                .frame(width: 300, height: 200)
-            }
-        }
-        .commands {
-            CommandGroup(after: .appSettings) {
-                Button("Settings...") {
-                    showSettings = true
-                }
-                .keyboardShortcut(",", modifiers: .command)
-            }
-        }
+    enum ViewMode {
+        case main
+        case settings
+        case appSelector
     }
 
     init() {
@@ -47,10 +23,10 @@ struct PathOpenerApp: App {
         let args = CommandLine.arguments
         if args.count > 1 {
             let path = args[1]
-            _pathToOpen = State(initialValue: path)
+            self.pathToOpen = path
 
             // Check if path matches any rule
-            if let matchingApp = appManager.findMatchingApp(for: path) {
+            if let matchingApp = AppManager.shared.findMatchingApp(for: path) {
                 // Open with matching app and quit
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     openPath(path, withApp: matchingApp)
@@ -58,17 +34,62 @@ struct PathOpenerApp: App {
                 }
             } else {
                 // Show app selector
-                _showAppSelector = State(initialValue: true)
+                self.currentView = .appSelector
             }
         } else {
             // No path provided, show settings
-            _showSettings = State(initialValue: true)
+            self.currentView = .settings
+        }
+    }
+}
+
+@main
+struct PathOpenerApp: App {
+    @StateObject private var appState = AppState()
+
+    var body: some Scene {
+        WindowGroup {
+            MainView()
+                .environmentObject(appState)
+        }
+        .commands {
+            CommandGroup(after: .appSettings) {
+                Button("Settings...") {
+                    appState.currentView = .settings
+                }
+                .keyboardShortcut(",", modifiers: .command)
+            }
+        }
+    }
+}
+
+struct MainView: View {
+    @EnvironmentObject var appState: AppState
+
+    var body: some View {
+        Group {
+            switch appState.currentView {
+            case .settings:
+                SettingsView()
+                    .frame(minWidth: 600, minHeight: 400)
+            case .appSelector:
+                if let path = appState.pathToOpen {
+                    AppSelectorView(path: path, onAppSelected: { app in
+                        openPath(path, withApp: app)
+                        NSApplication.shared.terminate(nil)
+                    })
+                    .frame(minWidth: 400, minHeight: 300)
+                }
+            case .main:
+                ContentView()
+                    .frame(width: 300, height: 200)
+            }
         }
     }
 }
 
 struct ContentView: View {
-    let onShowSettings: () -> Void
+    @EnvironmentObject var appState: AppState
 
     var body: some View {
         VStack(spacing: 20) {
@@ -86,7 +107,7 @@ struct ContentView: View {
                 .multilineTextAlignment(.center)
 
             Button("Open Settings") {
-                onShowSettings()
+                appState.currentView = .settings
             }
             .buttonStyle(.borderedProminent)
         }
@@ -99,6 +120,7 @@ struct ContentView: View {
 
     private func handleDrop(providers: [NSItemProvider]) {
         guard let provider = providers.first else { return }
+        let currentAppState = appState
 
         provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, error in
             guard let data = item as? Data,
@@ -107,20 +129,11 @@ struct ContentView: View {
             DispatchQueue.main.async {
                 let path = url.path
                 if let matchingApp = AppManager.shared.findMatchingApp(for: path) {
-                    NSWorkspace.shared.open([url], withApplicationAt: URL(fileURLWithPath: matchingApp.path), configuration: NSWorkspace.OpenConfiguration())
+                    openPath(path, withApp: matchingApp)
                 } else {
-                    // Show app selector window
-                    if let window = NSApplication.shared.windows.first {
-                        let selectorView = AppSelectorView(path: path, onAppSelected: { app in
-                            NSWorkspace.shared.open([url], withApplicationAt: URL(fileURLWithPath: app.path), configuration: NSWorkspace.OpenConfiguration())
-                        })
-
-                        let hostingController = NSHostingController(rootView: selectorView)
-                        let newWindow = NSWindow(contentViewController: hostingController)
-                        newWindow.title = "Select App"
-                        newWindow.setContentSize(NSSize(width: 400, height: 300))
-                        newWindow.makeKeyAndOrderFront(nil)
-                    }
+                    // Show app selector in the same window
+                    currentAppState.pathToOpen = path
+                    currentAppState.currentView = .appSelector
                 }
             }
         }
