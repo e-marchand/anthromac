@@ -1,5 +1,12 @@
 import SwiftUI
 
+// Helper function to open paths with apps
+func openPath(_ path: String, withApp app: AppInfo) {
+    let url = URL(fileURLWithPath: path)
+    let appURL = URL(fileURLWithPath: app.path)
+    NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration())
+}
+
 @main
 struct PathOpenerApp: App {
     @StateObject private var appManager = AppManager.shared
@@ -57,13 +64,6 @@ struct PathOpenerApp: App {
             // No path provided, show settings
             _showSettings = State(initialValue: true)
         }
-    }
-
-    private func openPath(_ path: String, withApp app: AppInfo) {
-        let url = URL(fileURLWithPath: path)
-        let appURL = URL(fileURLWithPath: app.path)
-
-        NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration())
     }
 }
 

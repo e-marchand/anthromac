@@ -1,7 +1,7 @@
 import Foundation
 import AppKit
 
-struct AppInfo: Identifiable, Codable, Equatable {
+struct AppInfo: Identifiable, Codable, Equatable, Hashable {
     let id: UUID
     var name: String
     var path: String
@@ -22,9 +22,17 @@ struct AppInfo: Identifiable, Codable, Equatable {
         }
         return NSWorkspace.shared.icon(forFile: path)
     }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    static func == (lhs: AppInfo, rhs: AppInfo) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
-struct PathRule: Identifiable, Codable, Equatable {
+struct PathRule: Identifiable, Codable, Equatable, Hashable {
     let id: UUID
     var pattern: String
     var isEnabled: Bool
@@ -33,6 +41,14 @@ struct PathRule: Identifiable, Codable, Equatable {
         self.id = id
         self.pattern = pattern
         self.isEnabled = isEnabled
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    static func == (lhs: PathRule, rhs: PathRule) -> Bool {
+        lhs.id == rhs.id
     }
 
     func matches(_ path: String) -> Bool {
