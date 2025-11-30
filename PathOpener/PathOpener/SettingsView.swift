@@ -3,6 +3,7 @@ import AppKit
 
 struct SettingsView: View {
     @StateObject private var appManager = AppManager.shared
+    @EnvironmentObject var appState: AppState
     @State private var selectedApp: AppInfo?
     @State private var newRulePattern: String = ""
     @State private var showingFilePicker = false
@@ -68,6 +69,14 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .automatic) {
+                Button("Done") {
+                    appState.currentView = .main
+                }
+                .keyboardShortcut(.defaultAction)
             }
         }
     }
