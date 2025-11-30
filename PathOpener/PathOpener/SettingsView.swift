@@ -57,7 +57,7 @@ struct SettingsView: View {
                 }
                 .padding(8)
             }
-            .frame(minWidth: 250)
+            .frame(minWidth: 180, idealWidth: 200, maxWidth: 250)
 
             // Right side: Rules editor
             if let app = selectedApp {
