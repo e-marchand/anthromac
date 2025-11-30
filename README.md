@@ -31,6 +31,18 @@ If ($result.success)
 End if
 ```
 
+### Sample Methods
+
+The project includes ready-to-use example methods in the "Copilot Examples" folder:
+
+- **Copilot_CheckInstallation** - Verify GitHub Copilot CLI is installed and accessible
+- **Copilot_ExecutePrompt** - Execute a simple prompt with custom input
+- **Copilot_Interactive** - Start interactive sessions (new/resume/continue)
+- **Copilot_AnalyzeDatabase** - Analyze your 4D database with predefined prompts
+- **Copilot_WithPermissions** - Execute with configured tool permissions
+
+Simply run any of these methods from 4D to see the CopilotCLI class in action!
+
 ### Documentation
 
 See [COPILOT_CLI_USAGE.md](COPILOT_CLI_USAGE.md) for complete usage examples and documentation.
@@ -47,8 +59,15 @@ See [COPILOT_CLI_USAGE.md](COPILOT_CLI_USAGE.md) for complete usage examples and
 ```
 Project/
 └── Sources/
-    └── Classes/
-        └── CopilotCLI.4dm    # GitHub Copilot CLI wrapper class
+    ├── Classes/
+    │   └── CopilotCLI.4dm              # GitHub Copilot CLI wrapper class
+    ├── Methods/
+    │   ├── Copilot_CheckInstallation.4dm
+    │   ├── Copilot_ExecutePrompt.4dm
+    │   ├── Copilot_Interactive.4dm
+    │   ├── Copilot_AnalyzeDatabase.4dm
+    │   └── Copilot_WithPermissions.4dm
+    └── folders.json                    # Method organization
 ```
 
 ## License
