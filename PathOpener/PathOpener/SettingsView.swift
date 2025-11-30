@@ -46,6 +46,13 @@ struct SettingsView: View {
                     .buttonStyle(.borderless)
                     .help("Add application or script")
 
+                    Button(action: removeSelectedApp) {
+                        Image(systemName: "minus")
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(selectedApp == nil)
+                    .help("Remove selected application")
+
                     Spacer()
                 }
                 .padding(8)
@@ -106,6 +113,12 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    private func removeSelectedApp() {
+        guard let app = selectedApp else { return }
+        appManager.removeApp(app)
+        selectedApp = nil
     }
 }
 
