@@ -9,7 +9,7 @@ func openPath(_ path: String, withApp app: AppInfo) {
 
 // App state management
 class AppState: ObservableObject {
-    @Published var currentView: ViewMode = .settings
+    @Published var currentView: ViewMode = .main
     @Published var pathToOpen: String?
 
     enum ViewMode {
@@ -36,10 +36,8 @@ class AppState: ObservableObject {
                 // Show app selector
                 self.currentView = .appSelector
             }
-        } else {
-            // No path provided, show settings
-            self.currentView = .settings
         }
+        // else: No path provided, show main view (default)
     }
 }
 
