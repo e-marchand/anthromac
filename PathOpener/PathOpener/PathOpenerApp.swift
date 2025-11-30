@@ -30,16 +30,18 @@ class AppState: ObservableObject {
 
     init() {
         // Handle command line arguments for opening paths
-        let args = CommandLine.arguments
-        if args.count > 1 {
-            let path = args[1]
-            self.pathToOpen = path
+        // Filter out debug flags (arguments starting with "-")
+        let pathArgs = CommandLine.arguments.dropFirst().filter { !$0.hasPrefix("-") }
+
+        // Find the first valid file or directory path
+        if let validPath = pathArgs.first(where: { FileManager.default.fileExists(atPath: $0) }) {
+            self.pathToOpen = validPath
 
             // Check if path matches any rule
-            if let matchingApp = AppManager.shared.findMatchingApp(for: path) {
+            if let matchingApp = AppManager.shared.findMatchingApp(for: validPath) {
                 // Open with matching app and quit
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    openPath(path, withApp: matchingApp)
+                    openPath(validPath, withApp: matchingApp)
                     NSApplication.shared.terminate(nil)
                 }
             } else {
@@ -47,7 +49,7 @@ class AppState: ObservableObject {
                 self.currentView = .appSelector
             }
         }
-        // else: No path provided, show main view (default)
+        // else: No valid path provided, show main view (default)
     }
 }
 
