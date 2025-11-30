@@ -124,15 +124,8 @@ struct AppRow: View {
                     .frame(width: 32, height: 32)
             }
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(app.name)
-                    .font(.body)
-                Text(app.path)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
+            Text(app.name)
+                .font(.body)
         }
         .padding(.vertical, 4)
     }
@@ -144,8 +137,9 @@ struct RulesEditor: View {
     @State private var newRulePattern: String = ""
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Header
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(alignment: .leading, spacing: 0) {
+                // Header
             HStack {
                 if let icon = app.icon {
                     Image(nsImage: icon)
@@ -223,7 +217,7 @@ struct RulesEditor: View {
                         .foregroundColor(.secondary)
                         .padding()
                 } else {
-                    List {
+                    VStack(spacing: 4) {
                         ForEach(app.rules) { rule in
                             RuleRow(
                                 app: app,
@@ -235,8 +229,10 @@ struct RulesEditor: View {
                                     appManager.removeRule(from: app, rule: rule)
                                 }
                             )
+                            Divider()
                         }
                     }
+                    .padding(.vertical, 4)
                 }
 
                 // Add rule input
@@ -252,7 +248,10 @@ struct RulesEditor: View {
                 }
             }
             .padding()
+            }
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func addRule() {
