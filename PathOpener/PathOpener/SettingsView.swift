@@ -184,6 +184,37 @@ struct RulesEditor: View {
 
             Divider()
 
+            // Command Line section
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Command Line")
+                        .font(.headline)
+
+                    Spacer()
+
+                    Text("Optional: Override with a command (e.g., code, /usr/bin/python)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Text("If set, uses Process to execute this command instead of NSWorkspace. Use {FOLDER} or {FILE} as placeholders.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                TextField("e.g., code or /usr/bin/python", text: Binding(
+                    get: { app.commandLine ?? "" },
+                    set: { newValue in
+                        var updatedApp = app
+                        updatedApp.commandLine = newValue.isEmpty ? nil : newValue
+                        appManager.updateApp(updatedApp)
+                    }
+                ))
+                .textFieldStyle(.roundedBorder)
+            }
+            .padding()
+
+            Divider()
+
             // Command Line Arguments section
             VStack(alignment: .leading, spacing: 8) {
                 HStack {

@@ -2,19 +2,112 @@ import SwiftUI
 
 // Helper function to open paths with apps
 func openPath(_ path: String, withApp app: AppInfo) {
-    let url = URL(fileURLWithPath: path)
-    let appURL = URL(fileURLWithPath: app.path)
-
-    // Check if app has custom command line arguments
-    if let args = app.resolveCommandLineArgs(forPath: path) {
-        // Launch with command line arguments
-        let config = NSWorkspace.OpenConfiguration()
-        config.arguments = args
-        NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: config)
+    // If commandLine is specified, use Process to execute it
+    if let commandLine = app.commandLine, !commandLine.isEmpty {
+        executeCommandLine(commandLine, path: path, app: app)
     } else {
-        // Launch normally without arguments
-        NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration())
+        // Use NSWorkspace for .app bundles
+        let url = URL(fileURLWithPath: path)
+        let appURL = URL(fileURLWithPath: app.path)
+
+        // Check if app has custom command line arguments
+        if let args = app.resolveCommandLineArgs(forPath: path) {
+            // Launch with command line arguments
+            let config = NSWorkspace.OpenConfiguration()
+            config.arguments = args
+            NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: config)
+        } else {
+            // Launch normally without arguments
+            NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration())
+        }
     }
+}
+
+// Execute command line with Process
+func executeCommandLine(_ commandLine: String, path: String, app: AppInfo) {
+    let process = Process()
+
+    // Resolve the command line by replacing variables
+    let resolvedCommand = commandLine
+        .replacingOccurrences(of: "{FOLDER}", with: path)
+        .replacingOccurrences(of: "{FILE}", with: path)
+
+    // Parse the command line to get executable and arguments
+    var components = parseCommandLineArgs(resolvedCommand)
+
+    guard !components.isEmpty else { return }
+
+    let executable = components.removeFirst()
+
+    // Check if executable is a full path or needs to be resolved
+    let executablePath: String
+    if executable.hasPrefix("/") {
+        executablePath = executable
+    } else {
+        // Try to find in PATH
+        executablePath = findInPath(executable) ?? executable
+    }
+
+    process.executableURL = URL(fileURLWithPath: executablePath)
+
+    // Add path as argument
+    var args = components
+
+    // Add custom arguments if specified
+    if let customArgs = app.resolveCommandLineArgs(forPath: path) {
+        args.append(contentsOf: customArgs)
+    } else {
+        // If no custom args, just add the path
+        args.append(path)
+    }
+
+    process.arguments = args
+
+    do {
+        try process.run()
+    } catch {
+        print("Failed to execute command: \(error)")
+    }
+}
+
+// Find executable in PATH
+func findInPath(_ executable: String) -> String? {
+    let paths = ProcessInfo.processInfo.environment["PATH"]?.split(separator: ":") ?? []
+
+    for pathDir in paths {
+        let fullPath = "\(pathDir)/\(executable)"
+        if FileManager.default.isExecutableFile(atPath: fullPath) {
+            return fullPath
+        }
+    }
+
+    return nil
+}
+
+// Parse command line arguments (same logic as in AppInfo)
+func parseCommandLineArgs(_ args: String) -> [String] {
+    var result: [String] = []
+    var current = ""
+    var inQuotes = false
+
+    for char in args {
+        if char == "\"" {
+            inQuotes.toggle()
+        } else if char == " " && !inQuotes {
+            if !current.isEmpty {
+                result.append(current)
+                current = ""
+            }
+        } else {
+            current.append(char)
+        }
+    }
+
+    if !current.isEmpty {
+        result.append(current)
+    }
+
+    return result
 }
 
 // App state management

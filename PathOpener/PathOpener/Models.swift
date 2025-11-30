@@ -7,14 +7,16 @@ struct AppInfo: Identifiable, Codable, Equatable, Hashable {
     var path: String
     var iconData: Data?
     var rules: [PathRule]
+    var commandLine: String?
     var commandLineArgs: String?
 
-    init(id: UUID = UUID(), name: String, path: String, iconData: Data? = nil, rules: [PathRule] = [], commandLineArgs: String? = nil) {
+    init(id: UUID = UUID(), name: String, path: String, iconData: Data? = nil, rules: [PathRule] = [], commandLine: String? = nil, commandLineArgs: String? = nil) {
         self.id = id
         self.name = name
         self.path = path
         self.iconData = iconData
         self.rules = rules
+        self.commandLine = commandLine
         self.commandLineArgs = commandLineArgs
     }
 
