@@ -301,27 +301,21 @@ Function _executeCommand($command : Text) : Object
 		// Create unique worker ID
 		$workerId:="copilot_"+String:C10(Generate UUID:C1066)
 
-		// Start the system worker
-		If (Count parameters:C259=0)
-			// Synchronous execution
-			This:C1470.worker:=4D:C1709.SystemWorker.new($command; {currentDirectory: This:C1470.workingDirectory; environmentVariables: $env})
-			This:C1470.workerId:=$workerId
-			This:C1470.isRunning:=True:C214
+		// Start the system worker (synchronous execution)
+		This:C1470.worker:=4D:C1709.SystemWorker.new($command; {currentDirectory: This:C1470.workingDirectory; environmentVariables: $env})
+		This:C1470.workerId:=$workerId
+		This:C1470.isRunning:=True:C214
 
-			// Wait for completion and collect output
-			This:C1470.worker.wait()
+		// Wait for completion and collect output
+		This:C1470.worker.wait()
 
-			$result.output:=This:C1470.worker.response
-			$result.error:=This:C1470.worker.errors
-			$result.success:=(This:C1470.worker.exitCode=0)
-			$result.exitCode:=This:C1470.worker.exitCode
-			$result.workerId:=$workerId
+		$result.output:=This:C1470.worker.response
+		$result.error:=This:C1470.worker.errors
+		$result.success:=(This:C1470.worker.exitCode=0)
+		$result.exitCode:=This:C1470.worker.exitCode
+		$result.workerId:=$workerId
 
-			This:C1470.isRunning:=False:C215
-		Else
-			// Asynchronous execution (not implemented in this version)
-			throw "Asynchronous execution not yet implemented"
-		End if
+		This:C1470.isRunning:=False:C215
 
 	Catch
 
