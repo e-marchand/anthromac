@@ -6,6 +6,7 @@ struct AppSelectorView: View {
     let onAppSelected: (AppInfo) -> Void
 
     @StateObject private var appManager = AppManager.shared
+    @EnvironmentObject var appState: AppState
     @State private var searchText: String = ""
 
     var filteredApps: [AppInfo] {
@@ -78,9 +79,7 @@ struct AppSelectorView: View {
                             .foregroundColor(.secondary)
 
                         Button("Open Settings") {
-                            // Close this window and open settings
-                            NSApplication.shared.windows.first(where: { $0.title == "Select App" })?.close()
-                            NotificationCenter.default.post(name: NSNotification.Name("ShowSettings"), object: nil)
+                            appState.currentView = .settings
                         }
                         .buttonStyle(.borderedProminent)
                     } else {
@@ -117,7 +116,7 @@ struct AppSelectorView: View {
             // Footer
             HStack {
                 Button("Cancel") {
-                    NSApplication.shared.windows.first(where: { $0.title == "Select App" })?.close()
+                    appState.currentView = .main
                 }
 
                 Spacer()
@@ -193,5 +192,6 @@ struct AppSelectionRow: View {
     AppSelectorView(path: "/Users/test/Documents/example.pdf") { app in
         print("Selected: \(app.name)")
     }
+    .environmentObject(AppState())
     .frame(width: 500, height: 400)
 }
