@@ -97,6 +97,11 @@ class AppManager: ObservableObject {
         return nil
     }
 
+    func moveApp(from source: IndexSet, to destination: Int) {
+        apps.move(fromOffsets: source, toOffset: destination)
+        saveApps()
+    }
+
     private func saveApps() {
         do {
             let data = try JSONEncoder().encode(apps)

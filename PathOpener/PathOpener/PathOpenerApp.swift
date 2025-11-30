@@ -4,7 +4,17 @@ import SwiftUI
 func openPath(_ path: String, withApp app: AppInfo) {
     let url = URL(fileURLWithPath: path)
     let appURL = URL(fileURLWithPath: app.path)
-    NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration())
+
+    // Check if app has custom command line arguments
+    if let args = app.resolveCommandLineArgs(forPath: path) {
+        // Launch with command line arguments
+        let config = NSWorkspace.OpenConfiguration()
+        config.arguments = args
+        NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: config)
+    } else {
+        // Launch normally without arguments
+        NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration())
+    }
 }
 
 // App state management

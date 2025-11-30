@@ -11,9 +11,14 @@ struct SettingsView: View {
         HSplitView {
             // Left side: App list
             VStack(alignment: .leading, spacing: 0) {
-                Text("Applications")
-                    .font(.headline)
-                    .padding()
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Applications")
+                        .font(.headline)
+                    Text("Drag to reorder • First match wins")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding()
 
                 List(selection: $selectedApp) {
                     ForEach(appManager.apps) { app in
@@ -27,6 +32,9 @@ struct SettingsView: View {
                                     }
                                 }
                             }
+                    }
+                    .onMove { source, destination in
+                        appManager.moveApp(from: source, to: destination)
                     }
                 }
                 .listStyle(.sidebar)
@@ -155,6 +163,37 @@ struct RulesEditor: View {
                 }
 
                 Spacer()
+            }
+            .padding()
+
+            Divider()
+
+            // Command Line Arguments section
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Command Line Arguments")
+                        .font(.headline)
+
+                    Spacer()
+
+                    Text("Optional arguments to pass when launching")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Text("Use {FOLDER} or {FILE} as placeholders for the target path")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                TextField("e.g., --new-window {FILE}", text: Binding(
+                    get: { app.commandLineArgs ?? "" },
+                    set: { newValue in
+                        var updatedApp = app
+                        updatedApp.commandLineArgs = newValue.isEmpty ? nil : newValue
+                        appManager.updateApp(updatedApp)
+                    }
+                ))
+                .textFieldStyle(.roundedBorder)
             }
             .padding()
 

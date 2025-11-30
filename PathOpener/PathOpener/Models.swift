@@ -7,13 +7,15 @@ struct AppInfo: Identifiable, Codable, Equatable, Hashable {
     var path: String
     var iconData: Data?
     var rules: [PathRule]
+    var commandLineArgs: String?
 
-    init(id: UUID = UUID(), name: String, path: String, iconData: Data? = nil, rules: [PathRule] = []) {
+    init(id: UUID = UUID(), name: String, path: String, iconData: Data? = nil, rules: [PathRule] = [], commandLineArgs: String? = nil) {
         self.id = id
         self.name = name
         self.path = path
         self.iconData = iconData
         self.rules = rules
+        self.commandLineArgs = commandLineArgs
     }
 
     var icon: NSImage? {
@@ -21,6 +23,48 @@ struct AppInfo: Identifiable, Codable, Equatable, Hashable {
             return NSImage(data: data)
         }
         return NSWorkspace.shared.icon(forFile: path)
+    }
+
+    /// Resolves command line arguments by replacing special variables
+    /// {FOLDER} - replaced with the folder path
+    /// {FILE} - replaced with the file path
+    func resolveCommandLineArgs(forPath targetPath: String) -> [String]? {
+        guard let args = commandLineArgs, !args.isEmpty else {
+            return nil
+        }
+
+        // Replace special variables
+        let resolved = args
+            .replacingOccurrences(of: "{FOLDER}", with: targetPath)
+            .replacingOccurrences(of: "{FILE}", with: targetPath)
+
+        // Split by spaces, but respect quotes
+        return parseCommandLineArgs(resolved)
+    }
+
+    private func parseCommandLineArgs(_ args: String) -> [String] {
+        var result: [String] = []
+        var current = ""
+        var inQuotes = false
+
+        for char in args {
+            if char == "\"" {
+                inQuotes.toggle()
+            } else if char == " " && !inQuotes {
+                if !current.isEmpty {
+                    result.append(current)
+                    current = ""
+                }
+            } else {
+                current.append(char)
+            }
+        }
+
+        if !current.isEmpty {
+            result.append(current)
+        }
+
+        return result
     }
 
     func hash(into hasher: inout Hasher) {
