@@ -1,0 +1,11 @@
+{
+	"Methods": {
+		"Copilot Examples": [
+			"Copilot_CheckInstallation",
+			"Copilot_ExecutePrompt",
+			"Copilot_Interactive",
+			"Copilot_AnalyzeDatabase",
+			"Copilot_WithPermissions"
+		]
+	}
+}
